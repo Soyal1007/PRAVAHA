@@ -59,12 +59,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSelectView, onO
     {
       group: 'Core Workspaces',
       items: [
-        { id: 'landingPage', label: 'Main Overview', icon: Home, iconColor: 'text-[#087F8C]', badge: 'Home' },
+        { id: 'landingPage', label: t('appTitle') + ' Overview', icon: Home, iconColor: 'text-[#087F8C]', badge: 'Home' },
         { id: 'commandCenter', label: t('commandCenter'), icon: LayoutDashboard, iconColor: 'text-indigo-600', badge: null },
         { id: 'liveMap', label: t('liveMap'), icon: Map, iconColor: 'text-teal-600', badge: 'Live GIS' },
-        { id: 'n8nCallAutomation', label: 'n8n Voice Hotline', icon: PhoneCall, iconColor: 'text-teal-600', badge: pendingN8nCalls > 0 ? `${pendingN8nCalls} calls` : 'IVR', badgeColor: 'bg-teal-100 text-teal-800 font-bold' },
-        { id: 'driverDashboard', label: 'Driver Cab', icon: Truck, iconColor: 'text-amber-600', badge: 'GPS' },
-        { id: 'authorityDashboard', label: 'Authority HQ', icon: Compass, iconColor: 'text-emerald-600', badge: 'SDMA' },
+        { id: 'n8nCallAutomation', label: t('n8nCallAutomation'), icon: PhoneCall, iconColor: 'text-teal-600', badge: pendingN8nCalls > 0 ? `${pendingN8nCalls} calls` : 'IVR', badgeColor: 'bg-teal-100 text-teal-800 font-bold' },
+        { id: 'driverDashboard', label: t('driverCab'), icon: Truck, iconColor: 'text-amber-600', badge: 'GPS' },
+        { id: 'authorityDashboard', label: t('authorityHq'), icon: Compass, iconColor: 'text-emerald-600', badge: 'SDMA' },
       ],
     },
     {
@@ -85,8 +85,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSelectView, onO
     {
       group: 'Intelligence & Risk',
       items: [
-        { id: 'analytics', label: 'Analytics & Charts', icon: BarChart3, iconColor: 'text-purple-600', badge: 'Charts' },
-        { id: 'nesdrDataCenter', label: 'NESDR Open GIS Data', icon: Database, iconColor: 'text-[#087F8C]', badge: 'ISRO/NESAC', badgeColor: 'bg-teal-100 text-teal-800 font-bold' },
+        { id: 'analytics', label: t('analytics'), icon: BarChart3, iconColor: 'text-purple-600', badge: 'Charts' },
+        { id: 'nesdrDataCenter', label: t('nesdrDataCenter'), icon: Database, iconColor: 'text-[#087F8C]', badge: 'ISRO/NESAC', badgeColor: 'bg-teal-100 text-teal-800 font-bold' },
         { id: 'weatherCore', label: t('weatherCore'), icon: CloudRain, iconColor: 'text-sky-600', badge: null },
         { id: 'riskEngine', label: t('riskEngine'), icon: Activity, iconColor: 'text-orange-500', badge: null },
       ],
