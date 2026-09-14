@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { useAuth } from '../../context/AuthContext';
-import { LeafletMapView } from '../map/LeafletMapView';
+import { InteractiveMap } from '../map/InteractiveMap';
 import { MapLayerState } from '../map/MapLayerToggle';
 import { UserRole } from '../../types';
 
@@ -302,7 +302,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
 
           {/* Embedded Live GIS Map */}
           <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-xs">
-            <LeafletMapView layers={demoLayers} height="480px" />
+            <InteractiveMap layers={demoLayers} height="480px" />
           </div>
         </section>
 

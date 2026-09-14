@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { LeafletMapView } from '../map/LeafletMapView';
+import { InteractiveMap } from '../map/InteractiveMap';
 import { MapLayerState } from '../map/MapLayerToggle';
 
 interface DashboardProps {
@@ -205,7 +205,7 @@ export const DriverDashboard: React.FC<DashboardProps> = ({ onNavigateToView, on
             </div>
 
             <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-2xs">
-              <LeafletMapView layers={mapLayers} height="380px" />
+              <InteractiveMap layers={mapLayers} height="380px" />
             </div>
           </div>
 
