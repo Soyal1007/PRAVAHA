@@ -1,0 +1,47 @@
+{
+  "total_datasets": 5,
+  "ingested_successfully": 5,
+  "failed": 0,
+  "datasets": [
+    {
+      "dataset_id": "NESAC_LHS_2023",
+      "title": "Northeast India Landslide Hazard Susceptibility Zone Vector",
+      "classification": "BASELINE",
+      "processed_records": 1,
+      "repaired_geometries": 0,
+      "status": "SUCCESS"
+    },
+    {
+      "dataset_id": "NESAC_FLEWS_AS_2023",
+      "title": "Assam Flood Inundation & Embankment Vulnerability Map (FLEWS)",
+      "classification": "OBSERVED",
+      "processed_records": 1,
+      "repaired_geometries": 0,
+      "status": "SUCCESS"
+    },
+    {
+      "dataset_id": "NESAC_BANK_EROSION_18_19",
+      "title": "Brahmaputra River Bank Erosion Vector Map",
+      "classification": "HISTORICAL",
+      "processed_records": 1,
+      "repaired_geometries": 0,
+      "status": "SUCCESS"
+    },
+    {
+      "dataset_id": "NESAC_SISDP_ROAD_AS_AR",
+      "title": "Space-Based Information Support for Decentralized Planning (SISDP Road Network)",
+      "classification": "BASELINE",
+      "processed_records": 1,
+      "repaired_geometries": 0,
+      "status": "SUCCESS"
+    },
+    {
+      "dataset_id": "NESAC_DEM_30M_TERRAIN",
+      "title": "NESAC Digital Elevation Model (DEM) & Slope Aspect Grid",
+      "classification": "BASELINE",
+      "processed_records": 1,
+      "repaired_geometries": 0,
+      "status": "SUCCESS"
+    }
+  ]
+}

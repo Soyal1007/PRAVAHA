@@ -12,7 +12,7 @@ interface DashboardProps {
 }
 
 export const AdminDashboard: React.FC<DashboardProps> = ({ onNavigateToView, onSelectEntity }) => {
-  const { shipments, vehicles, roads, incidents, alerts, systemEvents } = useAppState();
+  const { shipments, vehicles, roads, incidents, alerts, systemEvents, updateVerificationStatus } = useAppState();
   const { t } = useLanguage();
 
   const activeBlockages = roads.filter((r) => r.status === 'Blocked');
@@ -151,6 +151,148 @@ export const AdminDashboard: React.FC<DashboardProps> = ({ onNavigateToView, onS
           horizontal={true}
           unit="corridors"
         />
+      </div>
+
+      {/* Incident Data Provenance & Verification Center (True vs False Alarm Verification) */}
+      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <div className="flex items-center space-x-2">
+              <ShieldCheck className="w-6 h-6 text-[#087F8C]" />
+              <h3 className="font-extrabold text-lg text-slate-900 font-display">
+                Data Provenance & Incident Verification Center
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Cross-verify incident data sources (Satellite Radar, IoT Sensors, CWC Gauges, n8n Voice Hotline) to disproven false alarms and validate true emergency hazards.
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-3 text-xs">
+            <span className="bg-emerald-50 text-emerald-700 font-bold px-3 py-1.5 rounded-xl border border-emerald-200 flex items-center space-x-1">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>
+                {incidents.filter(i => i.verificationStatus === 'True Alarm (Verified)').length} True Verified
+              </span>
+            </span>
+            <span className="bg-red-50 text-red-700 font-bold px-3 py-1.5 rounded-xl border border-red-200 flex items-center space-x-1">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <span>
+                {incidents.filter(i => i.verificationStatus === 'False Alarm (Disproven)').length} False Alarms Disproven
+              </span>
+            </span>
+          </div>
+        </div>
+
+        {/* Verification Matrix Table */}
+        <div className="overflow-x-auto rounded-2xl border border-slate-200">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                <th className="p-3.5">Incident & Location</th>
+                <th className="p-3.5">Exact Verification Source</th>
+                <th className="p-3.5">Sensor Confidence</th>
+                <th className="p-3.5">Cross-Validation Notes</th>
+                <th className="p-3.5">Verification Status</th>
+                <th className="p-3.5">Admin Verification Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {incidents.map(inc => {
+                const isTrue = inc.verificationStatus === 'True Alarm (Verified)';
+                const isFalse = inc.verificationStatus === 'False Alarm (Disproven)';
+                return (
+                  <tr key={inc.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="p-3.5 align-top">
+                      <div className="font-extrabold text-slate-900 text-sm flex items-center space-x-2">
+                        <span>{inc.incidentType}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${
+                          inc.severity === 'Critical' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {inc.severity}
+                        </span>
+                      </div>
+                      <div className="text-slate-600 font-medium text-xs mt-0.5">{inc.location.name}</div>
+                      <div className="text-[10px] text-slate-400 font-mono mt-1">ID: {inc.id} | {inc.roadName}</div>
+                    </td>
+
+                    <td className="p-3.5 align-top">
+                      <div className="font-bold text-[#087F8C] bg-teal-50 px-2.5 py-1 rounded-xl border border-teal-100 text-xs inline-block">
+                        {inc.verificationSource}
+                      </div>
+                      {inc.verifiedBy && (
+                        <div className="text-[10px] text-slate-500 mt-1 font-medium">
+                          Verified By: {inc.verifiedBy}
+                        </div>
+                      )}
+                    </td>
+
+                    <td className="p-3.5 align-top">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-16 bg-slate-100 h-2 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${
+                              inc.confidenceScore > 80 ? 'bg-emerald-500' : inc.confidenceScore > 50 ? 'bg-amber-500' : 'bg-red-500'
+                            }`}
+                            style={{ width: `${inc.confidenceScore}%` }}
+                          />
+                        </div>
+                        <span className="font-mono font-extrabold text-slate-800 text-xs">
+                          {inc.confidenceScore}%
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 mt-1">
+                        {inc.crossValidationSourcesCount || 1} Independent Sources
+                      </div>
+                    </td>
+
+                    <td className="p-3.5 align-top max-w-xs">
+                      <p className="text-slate-700 text-[11px] leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+                        {inc.verificationNotes || inc.description}
+                      </p>
+                    </td>
+
+                    <td className="p-3.5 align-top">
+                      {isTrue ? (
+                        <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 font-black px-2.5 py-1 rounded-xl text-[11px] flex items-center space-x-1 w-max shadow-2xs">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>TRUE ALARM (VERIFIED)</span>
+                        </span>
+                      ) : isFalse ? (
+                        <span className="bg-red-100 text-red-900 border border-red-300 font-black px-2.5 py-1 rounded-xl text-[11px] flex items-center space-x-1 w-max shadow-2xs">
+                          <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                          <span>FALSE ALARM (DISPROVEN)</span>
+                        </span>
+                      ) : (
+                        <span className="bg-amber-100 text-amber-900 border border-amber-300 font-black px-2.5 py-1 rounded-xl text-[11px] flex items-center space-x-1 w-max shadow-2xs">
+                          <Activity className="w-3.5 h-3.5 text-amber-600" />
+                          <span>UNVERIFIED (PENDING)</span>
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="p-3.5 align-top">
+                      <div className="flex flex-col space-y-1.5">
+                        <button
+                          onClick={() => updateVerificationStatus(inc.id, 'True Alarm (Verified)', 'Verified via Admin Master Command', inc.verificationSource)}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3 py-1.5 rounded-xl text-[11px] transition-colors cursor-pointer shadow-2xs"
+                        >
+                          Mark as True Alarm
+                        </button>
+                        <button
+                          onClick={() => updateVerificationStatus(inc.id, 'False Alarm (Disproven)', 'Ground inspection disproved alert. De-escalated.', inc.verificationSource)}
+                          className="bg-slate-100 hover:bg-red-50 text-red-700 font-extrabold px-3 py-1.5 rounded-xl text-[11px] border border-slate-200 transition-colors cursor-pointer"
+                        >
+                          Flag as False Alarm
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Main Grid: Master GIS Map & System Audit Log */}

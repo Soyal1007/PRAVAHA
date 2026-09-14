@@ -9,18 +9,29 @@ interface LeafletMapViewProps {
   layers: MapLayerState;
   height?: string;
   onSelectEntity?: (type: 'vehicle' | 'shipment' | 'incident' | 'road' | 'warehouse', id: string) => void;
+  center?: { lat: number; lng: number };
+  zoom?: number;
 }
 
 export const LeafletMapView: React.FC<LeafletMapViewProps> = ({
   layers,
   height = '550px',
   onSelectEntity,
+  center = NORTHEAST_CENTER,
+  zoom = 7,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const layerGroupRef = useRef<L.LayerGroup | null>(null);
 
-  const { vehicles, shipments, roads, incidents, warehouses, hospitals, weatherEvents } = useAppState();
+  const { vehicles, shipments, roads, incidents, warehouses, hospitals, weatherEvents, nesdrDatasets, nesdrHazardZones } = useAppState();
+
+  // Handle Dynamic Map Panning when center/zoom changes
+  useEffect(() => {
+    if (mapInstanceRef.current && center) {
+      mapInstanceRef.current.setView([center.lat, center.lng], zoom, { animate: true });
+    }
+  }, [center, zoom]);
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -233,7 +244,55 @@ export const LeafletMapView: React.FC<LeafletMapViewProps> = ({
         marker.addTo(group);
       });
     }
-  }, [layers, vehicles, shipments, roads, incidents, warehouses, hospitals, weatherEvents, onSelectEntity]);
+
+    // 8. NESDR / NESAC Official GIS Hazard Overlays
+    const activeDatasetIds = new Set(nesdrDatasets.filter(d => d.activeOverlay).map(d => d.id));
+    if (activeDatasetIds.size > 0) {
+      nesdrHazardZones.forEach(zone => {
+        if (activeDatasetIds.has(zone.datasetId)) {
+          let fillColor = '#D97706'; // Amber Landslide
+          let color = '#B45309';
+
+          if (zone.type === 'Flood Inundation') {
+            fillColor = '#0284C7';
+            color = '#0369A1';
+          } else if (zone.type === 'River Bank Erosion') {
+            fillColor = '#DC2626';
+            color = '#991B1B';
+          } else if (zone.type === 'DEM Slope Gradient') {
+            fillColor = '#059669';
+            color = '#047857';
+          }
+
+          const latLngs: L.LatLngTuple[] = zone.coordinates.map(c => [c.lat, c.lng]);
+          const polygon = L.polygon(latLngs, {
+            color,
+            fillColor,
+            fillOpacity: 0.35,
+            weight: 2,
+          });
+
+          polygon.bindPopup(`
+            <div style="font-family: system-ui, -apple-system, sans-serif; font-size: 12px; max-width: 250px;">
+              <div style="font-size: 10px; font-weight: 800; background: #087F8C; color: white; padding: 2px 6px; border-radius: 4px; display: inline-block; text-transform: uppercase; margin-bottom: 4px;">
+                ${zone.sourceInfo.classification} DATASET
+              </div>
+              <strong style="color: #0F172A; font-size: 13px; display: block; margin-bottom: 3px;">${zone.name}</strong>
+              <div style="color: #475569; font-size: 11px;"><b>Hazard:</b> ${zone.type} (${zone.severity} Risk)</div>
+              <div style="background: #F1F5F9; border-left: 3px solid #087F8C; padding: 6px; border-radius: 4px; font-size: 11px; margin: 6px 0;">
+                <div><b>Source:</b> ${zone.sourceInfo.agency}</div>
+                <div style="color: #64748B; font-size: 10px;">Dataset: ${zone.sourceInfo.datasetTitle}</div>
+                <div style="color: #64748B; font-size: 10px;">Updated: <b>${zone.sourceInfo.updatedDate}</b></div>
+              </div>
+              <div style="font-size: 10px; color: #475569;"><b>Highways:</b> ${zone.affectedCorridors.join(', ')}</div>
+            </div>
+          `);
+
+          polygon.addTo(group);
+        }
+      });
+    }
+  }, [layers, vehicles, shipments, roads, incidents, warehouses, hospitals, weatherEvents, nesdrDatasets, nesdrHazardZones, onSelectEntity]);
 
   return (
     <div className="relative w-full rounded-xl overflow-hidden border border-slate-200 shadow-2xs">

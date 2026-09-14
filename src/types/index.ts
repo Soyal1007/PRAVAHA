@@ -2,6 +2,66 @@
 
 export type UserRole = 'Logistics Administrator' | 'Admin' | 'Logistics Operator' | 'Field Officer' | 'Driver' | 'Authority Viewer';
 
+export type NesdrDatasetClassification = 
+  | 'BASELINE' 
+  | 'OBSERVED' 
+  | 'REAL-TIME' 
+  | 'HISTORICAL' 
+  | 'PREDICTIVE' 
+  | 'REFERENCE';
+
+export type NesdrDomain = 
+  | 'Disaster Management' 
+  | 'Terrain' 
+  | 'Infrastructure' 
+  | 'Water Resource' 
+  | 'Land Resource' 
+  | 'Administrative Boundaries';
+
+export interface NesdrDataset {
+  id: string;
+  title: string;
+  domain: NesdrDomain;
+  classification: NesdrDatasetClassification;
+  sourceAgency: string;
+  sourceUrl: string;
+  ogcServiceUrl: string;
+  layerName: string;
+  dataFormat: 'WMS' | 'Shapefile' | 'GeoJSON' | 'GeoTIFF' | 'CSV';
+  lastUpdated: string;
+  coverage: string;
+  description: string;
+  relevanceToPravaha: string;
+  activeOverlay: boolean;
+  featuresCount: number;
+  spatialBounds: {
+    minLat: number;
+    maxLat: number;
+    minLng: number;
+    maxLng: number;
+  };
+}
+
+export interface NesdrHazardZone {
+  id: string;
+  datasetId: string;
+  name: string;
+  type: 'Landslide Susceptibility' | 'Flood Inundation' | 'River Bank Erosion' | 'DEM Slope Gradient' | 'SISDP Highway Corridor';
+  severity: RiskLevel;
+  state: string;
+  district: string;
+  affectedCorridors: string[];
+  coordinates: Array<{ lat: number; lng: number }>;
+  sourceInfo: {
+    agency: string;
+    datasetTitle: string;
+    updatedDate: string;
+    classification: NesdrDatasetClassification;
+    ogcUrl: string;
+  };
+  susceptibilityScore: number; // 0 - 100
+}
+
 export interface User {
   id: string;
   name: string;
@@ -118,6 +178,24 @@ export type IncidentType = 'Landslide' | 'Flood' | 'Road Damage' | 'Bridge Damag
 
 export type IncidentStatus = 'Pending Sync' | 'Submitted' | 'Under Review' | 'Verified' | 'Active' | 'Resolved';
 
+export type VerificationSource = 
+  | 'Satellite Radar (Sentinel-1)'
+  | 'IoT Water Level Sensor #402'
+  | 'Central Water Commission (CWC)'
+  | 'n8n Voice Call IVR'
+  | 'Field Officer Ground Check'
+  | 'Crowdsourced Citizen Report'
+  | 'Government Source'
+  | 'Field Report'
+  | 'GPS Signal'
+  | 'Weather Feed'
+  | 'System Estimate';
+
+export type VerificationStatus = 
+  | 'True Alarm (Verified)'
+  | 'False Alarm (Disproven)'
+  | 'Unverified (Pending Inspection)';
+
 export interface FieldReport {
   id: string;
   incidentType: IncidentType;
@@ -134,11 +212,37 @@ export interface FieldReport {
   status: IncidentStatus;
   affectedVehicleIds: string[];
   affectedShipmentIds: string[];
-  verificationSource: 'Government Source' | 'Field Report' | 'GPS Signal' | 'Weather Feed' | 'System Estimate';
+  verificationSource: VerificationSource;
   confidenceScore: number; // 0 - 100%
+  verificationStatus?: VerificationStatus;
+  verifiedBy?: string;
+  verifiedTimestamp?: string;
+  verificationNotes?: string;
+  crossValidationSourcesCount?: number;
 }
 
 export interface Incident extends FieldReport {}
+
+export interface CallRegistration {
+  id: string;
+  phoneNumber: string;
+  callerName: string;
+  language: string;
+  district: string;
+  state: string;
+  requestedRole: 'Volunteer' | 'Emergency Rescue Driver' | 'Field Relief Agent' | 'Citizen Reporter';
+  callDurationSec: number;
+  audioTranscript: string;
+  status: 'Pending Approval' | 'Approved' | 'Flagged for Verification' | 'Rejected';
+  verifiedStatus: 'True Identity' | 'False Alarm / Spam' | 'Pending Call-Back';
+  n8nWorkflowId: string;
+  timestamp: string;
+  extractedData?: {
+    equipment?: string;
+    availability?: string;
+    notes?: string;
+  };
+}
 
 export interface WeatherEvent {
   id: string;

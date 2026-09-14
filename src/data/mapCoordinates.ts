@@ -63,3 +63,87 @@ export const ROUTE_POLYLINES: Record<string, LocationCoordinates[]> = {
     CITIES.Aizawl,
   ]
 };
+
+export interface RegionalPreset {
+  id: string;
+  name: string;
+  state: string;
+  center: { lat: number; lng: number };
+  zoom: number;
+  description: string;
+  keyCities: string[];
+  badgeColor: string;
+}
+
+export const REGIONAL_PRESETS: RegionalPreset[] = [
+  {
+    id: 'all-ne',
+    name: 'Entire Northeast Region',
+    state: 'Northeast India',
+    center: { lat: 25.5788, lng: 91.8933 },
+    zoom: 7,
+    description: 'Comprehensive 8-State GIS logistics & corridor overview.',
+    keyCities: ['Guwahati', 'Shillong', 'Imphal', 'Gangtok', 'Silchar', 'Itanagar'],
+    badgeColor: 'bg-slate-800 text-white',
+  },
+  {
+    id: 'assam-valley',
+    name: 'Assam Valley & Brahmaputra Basin',
+    state: 'Assam',
+    center: { lat: 26.1445, lng: 92.5000 },
+    zoom: 8,
+    description: 'Guwahati, Brahmaputra river plain, Majuli island, Silchar & Lakhimpur flood corridors.',
+    keyCities: ['Guwahati', 'Silchar', 'Majuli', 'Dibrugarh', 'Tezpur', 'Lakhimpur'],
+    badgeColor: 'bg-teal-700 text-white',
+  },
+  {
+    id: 'meghalaya-hills',
+    name: 'Meghalaya Plateau',
+    state: 'Meghalaya',
+    center: { lat: 25.5788, lng: 91.8933 },
+    zoom: 9,
+    description: 'Shillong peak, Cherrapunji high-rainfall pass, Nongpoh NH-6 corridor.',
+    keyCities: ['Shillong', 'Nongpoh', 'Tura', 'Jowai', 'Dawki'],
+    badgeColor: 'bg-emerald-700 text-white',
+  },
+  {
+    id: 'manipur-valley',
+    name: 'Manipur Valley & Jiribam Corridor',
+    state: 'Manipur',
+    center: { lat: 24.8170, lng: 93.5000 },
+    zoom: 9,
+    description: 'Imphal medical hub, Loktak lake basin, Jiribam NH-37 lifeline.',
+    keyCities: ['Imphal', 'Jiribam', 'Senapati', 'Churachandpur'],
+    badgeColor: 'bg-purple-700 text-white',
+  },
+  {
+    id: 'sikkim-corridor',
+    name: 'Sikkim Teesta Valley (NH-10)',
+    state: 'Sikkim',
+    center: { lat: 27.1500, lng: 88.5000 },
+    zoom: 9,
+    description: 'Siliguri to Gangtok NH-10 mountain corridor, Sevoke 29th Mile landslide zone.',
+    keyCities: ['Gangtok', 'Siliguri', 'Kalimpong', 'Singtam'],
+    badgeColor: 'bg-amber-700 text-white',
+  },
+  {
+    id: 'arunachal-watershed',
+    name: 'Arunachal Subansiri Watershed',
+    state: 'Arunachal Pradesh',
+    center: { lat: 27.0844, lng: 93.6053 },
+    zoom: 8,
+    description: 'Itanagar capital complex, Subansiri river & border highways.',
+    keyCities: ['Itanagar', 'Pasighat', 'Ziro', 'Tawang'],
+    badgeColor: 'bg-blue-700 text-white',
+  },
+  {
+    id: 'tripura-mizoram',
+    name: 'Mizoram & Tripura Pass',
+    state: 'Mizoram & Tripura',
+    center: { lat: 23.7500, lng: 92.0000 },
+    zoom: 9,
+    description: 'Aizawl NH-306 corridor & Agartala plain route.',
+    keyCities: ['Aizawl', 'Agartala', 'Kolasib', 'Vairengte'],
+    badgeColor: 'bg-indigo-700 text-white',
+  },
+];

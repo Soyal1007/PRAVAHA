@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, ShieldAlert, BarChart, Info } from 'lucide-react';
+import { Activity, ShieldAlert, BarChart, Info, Database } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { InteractiveRadarChart } from '../common/charts/InteractiveRadarChart';
@@ -10,6 +10,7 @@ export const RiskEngineView: React.FC = () => {
   const { t } = useLanguage();
 
   const primaryCorridor = riskEvents[0] || {
+    corridorName: 'NH-10 Sevoke Corridor',
     factors: {
       terrainSusceptibility: 85,
       rainfall: 90,
@@ -46,9 +47,14 @@ export const RiskEngineView: React.FC = () => {
               {t('riskEngine')} Explainable Matrix
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Multi-factor corridor vulnerability score (0-100) based on slope, rainfall, telemetry, and history.
+              Multi-factor corridor vulnerability score (0-100) integrated with official NESDR/NESAC ISRO Landslide Susceptibility & Flood Inundation GIS baselines.
             </p>
           </div>
+        </div>
+
+        <div className="flex items-center space-x-2 bg-teal-50 border border-teal-200 px-3.5 py-2 rounded-2xl text-xs text-teal-900 font-extrabold shrink-0">
+          <Database className="w-4 h-4 text-[#087F8C]" />
+          <span>NESDR / NESAC GIS Baseline Enabled (20% Weight)</span>
         </div>
       </div>
 

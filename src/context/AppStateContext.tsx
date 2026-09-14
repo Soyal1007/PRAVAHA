@@ -14,6 +14,11 @@ import {
   SystemEvent,
   FieldReport,
   RiskLevel,
+  CallRegistration,
+  VerificationStatus,
+  VerificationSource,
+  NesdrDataset,
+  NesdrHazardZone,
 } from '../types';
 import {
   CURRENT_USER,
@@ -27,8 +32,10 @@ import {
   INITIAL_HOSPITALS,
   INITIAL_ALERTS,
   INITIAL_NOTIFICATIONS,
+  INITIAL_N8N_CALLS,
   ROUTE_OPTIONS_MAP,
 } from '../data/seedData';
+import { OFFICIAL_NESDR_DATASETS, NESDR_HAZARD_ZONES } from '../data/nesdrDatasets';
 import { offlineStorage } from '../services/offlineStorage';
 import { evaluateRouteOption } from '../services/routeEngine';
 
@@ -42,6 +49,7 @@ interface AppStateContextType {
   shipments: Shipment[];
   roads: RoadSegment[];
   incidents: Incident[];
+  n8nCalls: CallRegistration[];
   weatherEvents: WeatherEvent[];
   riskEvents: RiskEvent[];
   warehouses: Warehouse[];
@@ -49,11 +57,34 @@ interface AppStateContextType {
   alerts: Alert[];
   notifications: Notification[];
   systemEvents: SystemEvent[];
+  n8nWebhookUrl: string;
+  setN8nWebhookUrl: (url: string) => void;
 
   // Actions
   rerouteShipment: (shipmentId: string, newRouteOptionId: string) => void;
   submitFieldReport: (report: Omit<FieldReport, 'id' | 'timestamp' | 'status'>) => void;
   verifyIncident: (incidentId: string) => void;
+  updateVerificationStatus: (
+    incidentId: string,
+    status: VerificationStatus,
+    notes?: string,
+    source?: VerificationSource
+  ) => void;
+  simulateN8nCall: (callData: {
+    phoneNumber: string;
+    callerName: string;
+    language: string;
+    district: string;
+    state: string;
+    requestedRole: 'Volunteer' | 'Emergency Rescue Driver' | 'Field Relief Agent' | 'Citizen Reporter';
+    audioTranscript: string;
+    equipment?: string;
+  }) => void;
+  updateN8nCallStatus: (
+    callId: string,
+    status: 'Approved' | 'Rejected' | 'Pending Approval',
+    verifiedStatus: 'True Identity' | 'False Alarm / Spam' | 'Pending Call-Back'
+  ) => void;
   blockRoadSegment: (roadId: string, cause: string) => void;
   unblockRoadSegment: (roadId: string) => void;
   updateVehicleSpeed: (vehicleId: string, speedKmH: number) => void;
@@ -65,6 +96,13 @@ interface AppStateContextType {
   resetAllState: () => void;
   selectedEntity: { type: 'vehicle' | 'shipment' | 'incident' | 'road' | 'warehouse'; id: string } | null;
   setSelectedEntity: (entity: { type: 'vehicle' | 'shipment' | 'incident' | 'road' | 'warehouse'; id: string } | null) => void;
+
+  // NESDR / NESAC Spatial Intelligence State & Actions
+  nesdrDatasets: NesdrDataset[];
+  nesdrHazardZones: NesdrHazardZone[];
+  selectedHazardZone: NesdrHazardZone | null;
+  setSelectedHazardZone: (zone: NesdrHazardZone | null) => void;
+  toggleNesdrDatasetOverlay: (datasetId: string) => void;
 }
 
 const AppStateContext = createContext<AppStateContextType | undefined>(undefined);
@@ -78,6 +116,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [shipments, setShipments] = useState<Shipment[]>(INITIAL_SHIPMENTS);
   const [roads, setRoads] = useState<RoadSegment[]>(INITIAL_ROADS);
   const [incidents, setIncidents] = useState<Incident[]>(INITIAL_INCIDENTS);
+  const [n8nCalls, setN8nCalls] = useState<CallRegistration[]>(INITIAL_N8N_CALLS);
   const [weatherEvents, setWeatherEvents] = useState<WeatherEvent[]>(INITIAL_WEATHER);
   const [riskEvents, setRiskEvents] = useState<RiskEvent[]>(INITIAL_RISK_EVENTS);
   const [warehouses, setWarehouses] = useState<Warehouse[]>(INITIAL_WAREHOUSES);
@@ -85,7 +124,19 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [alerts, setAlerts] = useState<Alert[]>(INITIAL_ALERTS);
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [systemEvents, setSystemEvents] = useState<SystemEvent[]>([]);
+  const [n8nWebhookUrl, setN8nWebhookUrl] = useState<string>('https://n8n.pravaha.gov.in/webhook/voice-registration');
   const [selectedEntity, setSelectedEntity] = useState<{ type: 'vehicle' | 'shipment' | 'incident' | 'road' | 'warehouse'; id: string } | null>(null);
+
+  // NESDR Spatial Intelligence State
+  const [nesdrDatasets, setNesdrDatasets] = useState<NesdrDataset[]>(OFFICIAL_NESDR_DATASETS);
+  const [nesdrHazardZones] = useState<NesdrHazardZone[]>(NESDR_HAZARD_ZONES);
+  const [selectedHazardZone, setSelectedHazardZone] = useState<NesdrHazardZone | null>(null);
+
+  const toggleNesdrDatasetOverlay = (datasetId: string) => {
+    setNesdrDatasets(prev =>
+      prev.map(ds => (ds.id === datasetId ? { ...ds, activeOverlay: !ds.activeOverlay } : ds))
+    );
+  };
 
   // Sync offline storage count
   useEffect(() => {
@@ -329,6 +380,105 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     addSystemLog(`Notified regional administration for alert ${alertId}`);
   };
 
+  // Enhanced Incident Verification: Mark True Alarm vs False Alarm
+  const updateVerificationStatus = (
+    incidentId: string,
+    status: VerificationStatus,
+    notes?: string,
+    source?: VerificationSource
+  ) => {
+    const targetInc = incidents.find(i => i.id === incidentId);
+    if (!targetInc) return;
+
+    const isTrue = status === 'True Alarm (Verified)';
+    const isFalse = status === 'False Alarm (Disproven)';
+
+    setIncidents(prev =>
+      prev.map(i => {
+        if (i.id === incidentId) {
+          return {
+            ...i,
+            verificationStatus: status,
+            status: isTrue ? 'Verified' : isFalse ? 'Resolved' : 'Under Review',
+            verificationSource: source || i.verificationSource,
+            verifiedBy: CURRENT_USER.name + ' (Admin Control)',
+            verifiedTimestamp: new Date().toISOString(),
+            verificationNotes: notes || (isTrue ? 'Confirmed via multi-sensor data provenance.' : 'Inspected & disproven as false alarm/hoax.'),
+            confidenceScore: isTrue ? 99 : isFalse ? 5 : i.confidenceScore,
+          };
+        }
+        return i;
+      })
+    );
+
+    if (isFalse) {
+      // Find and unblock any road associated with this false alarm
+      const targetRoad = roads.find(r => r.roadName.includes(targetInc.roadName) || targetInc.roadName.includes(r.roadName));
+      if (targetRoad && targetRoad.status === 'Blocked') {
+        unblockRoadSegment(targetRoad.id);
+      }
+      addNotification('False Alarm Disproven', `Incident #${incidentId} on ${targetInc.roadName} flagged as FALSE ALARM. Road status restored.`, 'Operations');
+      addSystemLog(`Admin flagged Incident ${targetInc.id} on ${targetInc.roadName} as FALSE ALARM. De-escalated.`);
+    } else if (isTrue) {
+      const targetRoad = roads.find(r => r.roadName.includes(targetInc.roadName) || targetInc.roadName.includes(r.roadName));
+      if (targetRoad) {
+        blockRoadSegment(targetRoad.id, targetInc.description);
+      }
+      addNotification('True Alarm Verified', `Incident #${incidentId} on ${targetInc.roadName} VERIFIED TRUE via ${source || targetInc.verificationSource}.`, 'Critical');
+      addSystemLog(`Admin VERIFIED Incident ${targetInc.id} as TRUE ALARM using ${source || targetInc.verificationSource}. Emergency teams dispatched.`);
+    }
+  };
+
+  // Simulate incoming n8n Voice Call IVR trigger
+  const simulateN8nCall = (callData: {
+    phoneNumber: string;
+    callerName: string;
+    language: string;
+    district: string;
+    state: string;
+    requestedRole: 'Volunteer' | 'Emergency Rescue Driver' | 'Field Relief Agent' | 'Citizen Reporter';
+    audioTranscript: string;
+    equipment?: string;
+  }) => {
+    const newCall: CallRegistration = {
+      id: `CALL-${Math.floor(1000 + Math.random() * 9000)}`,
+      phoneNumber: callData.phoneNumber,
+      callerName: callData.callerName,
+      language: callData.language,
+      district: callData.district,
+      state: callData.state,
+      requestedRole: callData.requestedRole,
+      callDurationSec: Math.floor(25 + Math.random() * 45),
+      audioTranscript: callData.audioTranscript,
+      status: 'Pending Approval',
+      verifiedStatus: 'True Identity',
+      n8nWorkflowId: `wf-n8n-ivr-${Date.now().toString().slice(-4)}`,
+      timestamp: new Date().toISOString(),
+      extractedData: {
+        equipment: callData.equipment || 'Standard Response Kit',
+        availability: 'Immediate / Active',
+        notes: 'Generated via n8n IVR Webhook Simulator.',
+      },
+    };
+
+    setN8nCalls(prev => [newCall, ...prev]);
+    addNotification('New n8n IVR Call Registered', `Incoming registration call from ${newCall.callerName} (${newCall.district}, ${newCall.language}).`, 'Operations');
+    addSystemLog(`n8n Webhook Triggered: New registration call ${newCall.id} from ${newCall.phoneNumber} (${newCall.callerName})`);
+  };
+
+  // Approve / Reject n8n call registration
+  const updateN8nCallStatus = (
+    callId: string,
+    status: 'Approved' | 'Rejected' | 'Pending Approval',
+    verifiedStatus: 'True Identity' | 'False Alarm / Spam' | 'Pending Call-Back'
+  ) => {
+    setN8nCalls(prev =>
+      prev.map(c => (c.id === callId ? { ...c, status, verifiedStatus } : c))
+    );
+    addNotification('n8n Registration Updated', `Caller ${callId} status updated to ${status} (${verifiedStatus}).`, 'System');
+    addSystemLog(`Admin updated n8n Voice Call ${callId} to ${status} [${verifiedStatus}]`);
+  };
+
   const syncOfflineQueue = () => {
     const pendingReports = offlineStorage.getPendingReports();
     if (pendingReports.length === 0) return;
@@ -349,6 +499,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setShipments(INITIAL_SHIPMENTS);
     setRoads(INITIAL_ROADS);
     setIncidents(INITIAL_INCIDENTS);
+    setN8nCalls(INITIAL_N8N_CALLS);
     setWeatherEvents(INITIAL_WEATHER);
     setRiskEvents(INITIAL_RISK_EVENTS);
     setWarehouses(INITIAL_WAREHOUSES);
@@ -374,6 +525,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         shipments,
         roads,
         incidents,
+        n8nCalls,
         weatherEvents,
         riskEvents,
         warehouses,
@@ -381,9 +533,14 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         alerts,
         notifications,
         systemEvents,
+        n8nWebhookUrl,
+        setN8nWebhookUrl,
         rerouteShipment,
         submitFieldReport,
         verifyIncident,
+        updateVerificationStatus,
+        simulateN8nCall,
+        updateN8nCallStatus,
         blockRoadSegment,
         unblockRoadSegment,
         updateVehicleSpeed,
@@ -395,6 +552,11 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         resetAllState,
         selectedEntity,
         setSelectedEntity,
+        nesdrDatasets,
+        nesdrHazardZones,
+        selectedHazardZone,
+        setSelectedHazardZone,
+        toggleNesdrDatasetOverlay,
       }}
     >
       {children}

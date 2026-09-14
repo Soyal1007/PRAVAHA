@@ -9,6 +9,8 @@ interface GoogleMapViewProps {
   layers: MapLayerState;
   height?: string;
   onSelectEntity?: (type: 'vehicle' | 'shipment' | 'incident' | 'road' | 'warehouse', id: string) => void;
+  center?: { lat: number; lng: number };
+  zoom?: number;
 }
 
 const createSvgDataUrl = (svgString: string) => {
@@ -47,16 +49,26 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
   layers,
   height = '550px',
   onSelectEntity,
+  center = NORTHEAST_CENTER,
+  zoom = 7,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const objectsRef = useRef<Array<google.maps.Polyline | google.maps.Marker | google.maps.Circle>>([]);
+  const objectsRef = useRef<Array<google.maps.Polyline | google.maps.Marker | google.maps.Circle | google.maps.Polygon>>([]);
   const activeInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
 
   const [mapLoaded, setMapLoaded] = useState<boolean>(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const { vehicles, shipments, roads, incidents, warehouses, hospitals, weatherEvents } = useAppState();
+  const { vehicles, shipments, roads, incidents, warehouses, hospitals, weatherEvents, nesdrDatasets, nesdrHazardZones } = useAppState();
+
+  // Dynamic Map Panning when center/zoom changes
+  useEffect(() => {
+    if (mapInstanceRef.current && center) {
+      mapInstanceRef.current.panTo({ lat: center.lat, lng: center.lng });
+      mapInstanceRef.current.setZoom(zoom);
+    }
+  }, [center, zoom]);
 
   const apiKey = getGoogleMapsApiKey();
 
@@ -270,6 +282,85 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
           });
 
           objectsRef.current.push(circle);
+        }
+      });
+    }
+
+    // 4. NESDR / NESAC Official GIS Hazard Overlays
+    const activeDatasetIds = new Set(nesdrDatasets.filter(d => d.activeOverlay).map(d => d.id));
+    if (activeDatasetIds.size > 0) {
+      nesdrHazardZones.forEach(zone => {
+        if (activeDatasetIds.has(zone.datasetId)) {
+          let fillColor = '#D97706'; // Amber Landslide
+          let strokeColor = '#B45309';
+
+          if (zone.type === 'Flood Inundation') {
+            fillColor = '#0284C7'; // Blue
+            strokeColor = '#0369A1';
+          } else if (zone.type === 'River Bank Erosion') {
+            fillColor = '#DC2626'; // Red
+            strokeColor = '#991B1B';
+          } else if (zone.type === 'DEM Slope Gradient') {
+            fillColor = '#059669'; // Emerald
+            strokeColor = '#047857';
+          }
+
+          const polygon = new google.maps.Polygon({
+            paths: zone.coordinates,
+            strokeColor,
+            strokeOpacity: 0.9,
+            strokeWeight: 2,
+            fillColor,
+            fillOpacity: 0.35,
+            map,
+          });
+
+          const popupContent = `
+            <div style="font-family: system-ui, -apple-system, sans-serif; font-size: 12px; max-width: 260px; padding: 6px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                <span style="font-size: 10px; font-weight: 800; background: #087F8C; color: white; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">
+                  ${zone.sourceInfo.classification} DATASET
+                </span>
+                <span style="font-size: 10px; color: #64748B; font-weight: 700;">Score: ${zone.susceptibilityScore}/100</span>
+              </div>
+              <div style="font-weight: 800; color: #0F172A; font-size: 13px; margin-bottom: 3px; line-height: 1.3;">
+                ${zone.name}
+              </div>
+              <div style="color: #475569; font-size: 11px; margin-bottom: 6px;">
+                <b>Hazard Type:</b> ${zone.type} (${zone.severity} Severity)
+              </div>
+              <div style="background: #F1F5F9; border-left: 3px solid #087F8C; padding: 6px; border-radius: 4px; font-size: 11px; margin-bottom: 6px;">
+                <div style="color: #1E293B; font-weight: 700;">Source Attribution:</div>
+                <div style="color: #334155;">${zone.sourceInfo.agency}</div>
+                <div style="color: #64748B; font-size: 10px; margin-top: 2px;">Dataset: ${zone.sourceInfo.datasetTitle}</div>
+                <div style="color: #64748B; font-size: 10px;">Last Updated: <b>${zone.sourceInfo.updatedDate}</b></div>
+              </div>
+              <div style="font-size: 10px; color: #475569;">
+                <b>Affected Highways:</b> ${zone.affectedCorridors.join(', ')}
+              </div>
+              <div style="margin-top: 6px; text-align: right;">
+                <a href="${zone.sourceInfo.ogcUrl}" target="_blank" rel="noopener noreferrer" style="font-size: 10px; color: #087F8C; font-weight: 800; text-decoration: underline;">
+                  View NESDR Service →
+                </a>
+              </div>
+            </div>
+          `;
+
+          const infoWindow = new google.maps.InfoWindow({
+            content: popupContent,
+            position: zone.coordinates[0],
+          });
+
+          polygon.addListener('click', (e: google.maps.MapMouseEvent) => {
+            closeActiveInfoWindow();
+            if (e.latLng) {
+              infoWindow.setPosition(e.latLng);
+            }
+            infoWindow.open(map);
+            activeInfoWindowRef.current = infoWindow;
+          });
+
+          objectsRef.current.push(polygon);
         }
       });
     }

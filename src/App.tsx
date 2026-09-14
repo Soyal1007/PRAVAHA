@@ -19,6 +19,7 @@ import { LandingPageView } from './components/views/LandingPageView';
 import { LoginPortalView } from './components/views/LoginPortalView';
 import { CommandCenter } from './components/views/CommandCenter';
 import { LiveMapView } from './components/views/LiveMapView';
+import { N8nCallAutomationView } from './components/views/N8nCallAutomationView';
 import { RouteGuardView } from './components/views/RouteGuardView';
 import { FleetPulseView } from './components/views/FleetPulseView';
 import { SupplyGridView } from './components/views/SupplyGridView';
@@ -27,6 +28,7 @@ import { RiskEngineView } from './components/views/RiskEngineView';
 import { FieldLinkView } from './components/views/FieldLinkView';
 import { AlertNetView } from './components/views/AlertNetView';
 import { AnalyticsView } from './components/views/AnalyticsView';
+import { NesdrDataCenterView } from './components/views/NesdrDataCenterView';
 import { ReportsView } from './components/views/ReportsView';
 import { HelpSupportView } from './components/views/HelpSupportView';
 import { SettingsView } from './components/views/SettingsView';
@@ -118,6 +120,13 @@ const MainApp: React.FC = () => {
           </div>
         );
 
+      case 'n8nCallAutomation':
+        return (
+          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+            <N8nCallAutomationView />
+          </div>
+        );
+
       case 'routeGuard':
         return (
           <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
@@ -153,6 +162,13 @@ const MainApp: React.FC = () => {
         return (
           <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
             <RiskEngineView />
+          </div>
+        );
+
+      case 'nesdrDataCenter':
+        return (
+          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+            <NesdrDataCenterView />
           </div>
         );
 
