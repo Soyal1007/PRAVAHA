@@ -74,6 +74,11 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
 
   // Load Google Maps API Script
   useEffect(() => {
+    // Catch Google Maps API Authentication Failure
+    (window as any).gm_authFailure = () => {
+      setLoadError('Google Maps API Key Authentication failed. Please verify your API key in Settings or switch to Leaflet OSM.');
+    };
+
     if (!apiKey) {
       setLoadError('Google Maps API key is missing. Please set VITE_GOOGLE_MAPS_API_KEY in .env or Settings.');
       return;
@@ -107,7 +112,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
     };
 
     script.onerror = () => {
-      setLoadError('Failed to load Google Maps SDK. Please check your API key and network connection.');
+      setLoadError('Failed to load Google Maps SDK. Please check your network connection or API key.');
     };
 
     document.head.appendChild(script);
@@ -115,12 +120,19 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
 
   // Initialize Map Instance
   useEffect(() => {
-    if (!mapLoaded || !mapContainerRef.current || mapInstanceRef.current) return;
+    if (!mapLoaded || !mapContainerRef.current) return;
+
+    if (mapInstanceRef.current) {
+      // Re-center if map instance exists
+      mapInstanceRef.current.panTo({ lat: center.lat, lng: center.lng });
+      mapInstanceRef.current.setZoom(zoom);
+      return;
+    }
 
     try {
       const map = new google.maps.Map(mapContainerRef.current, {
-        center: { lat: NORTHEAST_CENTER.lat, lng: NORTHEAST_CENTER.lng },
-        zoom: 7,
+        center: { lat: center.lat, lng: center.lng },
+        zoom,
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         fullscreenControl: true,
         streetViewControl: false,
@@ -155,7 +167,15 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
       console.error('Error initializing Google Map:', err);
       setLoadError(err.message || 'Error initializing Google Maps.');
     }
-  }, [mapLoaded]);
+
+    return () => {
+      if (objectsRef.current) {
+        objectsRef.current.forEach(obj => obj.setMap(null));
+        objectsRef.current = [];
+      }
+      mapInstanceRef.current = null;
+    };
+  }, [mapLoaded, center, zoom]);
 
   // Render Map Layers & Markers
   useEffect(() => {
