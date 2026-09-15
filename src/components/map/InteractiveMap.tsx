@@ -19,7 +19,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   onSelectEntity,
 }) => {
   const apiKey = getGoogleMapsApiKey();
-  const [provider, setProvider] = useState<'google' | 'leaflet'>(apiKey ? 'google' : 'google');
+  const [provider, setProvider] = useState<'google' | 'leaflet'>(apiKey ? 'google' : 'leaflet');
   const [selectedPreset, setSelectedPreset] = useState<RegionalPreset>(REGIONAL_PRESETS[0]);
 
   return (

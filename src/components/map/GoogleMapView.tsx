@@ -87,19 +87,14 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
 
     if (window.google && window.google.maps) {
       setMapLoaded(true);
+      setLoadError(null);
       return;
     }
 
     // Check if script is already injected
     const existingScript = document.getElementById('google-maps-js-sdk');
     if (existingScript) {
-      const checkLoaded = setInterval(() => {
-        if (window.google && window.google.maps) {
-          clearInterval(checkLoaded);
-          setMapLoaded(true);
-        }
-      }, 200);
-      return () => clearInterval(checkLoaded);
+      existingScript.remove();
     }
 
     const script = document.createElement('script');
@@ -108,15 +103,28 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
     script.async = true;
     script.defer = true;
 
+    const timeoutTimer = setTimeout(() => {
+      if (!window.google || !window.google.maps) {
+        setLoadError('Google Maps SDK loading timed out. Please check your network connection or verify API key.');
+      }
+    }, 6000);
+
     script.onload = () => {
+      clearTimeout(timeoutTimer);
       setMapLoaded(true);
+      setLoadError(null);
     };
 
     script.onerror = () => {
+      clearTimeout(timeoutTimer);
       setLoadError('Failed to load Google Maps SDK. Please check network connection or verify API key.');
     };
 
     document.head.appendChild(script);
+
+    return () => {
+      clearTimeout(timeoutTimer);
+    };
   }, [apiKey]);
 
   // Initialize Map Instance
