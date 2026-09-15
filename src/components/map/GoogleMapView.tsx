@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useAppState } from '../../context/AppStateContext';
 import { NORTHEAST_CENTER, ROUTE_POLYLINES } from '../../data/mapCoordinates';
 import { MapLayerState } from './MapLayerToggle';
-import { getGoogleMapsApiKey } from '../../config/maps';
-import { AlertTriangle, Key, MapPin, Layers } from 'lucide-react';
+import { getGoogleMapsApiKey, setGoogleMapsApiKey } from '../../config/maps';
+import { AlertTriangle, Key, MapPin, Layers, Save, CheckCircle } from 'lucide-react';
 
 interface GoogleMapViewProps {
   layers: MapLayerState;
@@ -59,6 +59,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
 
   const [mapLoaded, setMapLoaded] = useState<boolean>(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [inputKey, setInputKey] = useState<string>('');
 
   const { vehicles, shipments, roads, incidents, warehouses, hospitals, weatherEvents, nesdrDatasets, nesdrHazardZones } = useAppState();
 
@@ -76,11 +77,11 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
   useEffect(() => {
     // Catch Google Maps API Authentication Failure
     (window as any).gm_authFailure = () => {
-      setLoadError('Google Maps API Key Authentication failed. Please verify your API key in Settings or switch to Leaflet OSM.');
+      setLoadError('Google Maps API Key Authentication failed. The provided API key is invalid or restricted. Please enter a valid key below or switch to Leaflet OSM.');
     };
 
     if (!apiKey) {
-      setLoadError('Google Maps API key is missing. Please set VITE_GOOGLE_MAPS_API_KEY in .env or Settings.');
+      setLoadError('Google Maps API key is missing. Please enter your API key below or configure VITE_GOOGLE_MAPS_API_KEY in .env.');
       return;
     }
 
@@ -112,7 +113,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
     };
 
     script.onerror = () => {
-      setLoadError('Failed to load Google Maps SDK. Please check your network connection or API key.');
+      setLoadError('Failed to load Google Maps SDK. Please check network connection or verify API key.');
     };
 
     document.head.appendChild(script);
@@ -536,19 +537,54 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
 
   if (loadError) {
     return (
-      <div className="relative w-full rounded-xl overflow-hidden border border-amber-300 bg-amber-50 p-6 text-slate-800 space-y-3" style={{ height }}>
-        <div className="flex items-center space-x-2 text-amber-800 font-extrabold text-base">
+      <div className="relative w-full rounded-2xl overflow-hidden border border-amber-300 bg-amber-50 p-6 text-slate-800 space-y-4" style={{ height }}>
+        <div className="flex items-center space-x-2 text-amber-900 font-extrabold text-base">
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-          <span>Google Maps Key Notice</span>
+          <span>Google Maps API Key Required</span>
         </div>
-        <p className="text-xs text-amber-900 leading-relaxed max-w-xl">
+
+        <p className="text-xs text-amber-900 leading-relaxed max-w-xl font-medium">
           {loadError}
         </p>
-        <div className="text-xs text-slate-600 space-y-1">
-          <div>To resolve this:</div>
-          <ul className="list-disc list-inside text-[11px] font-mono text-slate-700 space-y-0.5">
-            <li>Ensure <code className="bg-amber-100 px-1 py-0.5 rounded">VITE_GOOGLE_MAPS_API_KEY</code> is set in <code className="bg-amber-100 px-1 py-0.5 rounded">.env</code></li>
-            <li>Or set the key under <b>Settings & System Configuration</b> in the UI</li>
+
+        {/* Inline API Key Input */}
+        <div className="bg-white p-4 rounded-xl border border-amber-200 shadow-2xs space-y-2 max-w-lg">
+          <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+            Paste Google Maps API Key Here
+          </label>
+          <div className="flex items-center space-x-2">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <Key className="w-4 h-4" />
+              </div>
+              <input
+                type="text"
+                value={inputKey}
+                onChange={e => setInputKey(e.target.value)}
+                placeholder="AIzaSy..."
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg font-mono text-xs text-slate-900 focus:outline-none focus:border-[#087F8C]"
+              />
+            </div>
+            <button
+              onClick={() => {
+                if (inputKey.trim()) {
+                  setGoogleMapsApiKey(inputKey.trim());
+                  window.location.reload();
+                }
+              }}
+              className="bg-[#087F8C] hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center space-x-1.5 transition-colors cursor-pointer shrink-0"
+            >
+              <Save className="w-4 h-4" />
+              <span>Save & Reload</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="text-xs text-slate-600 space-y-1 pt-1">
+          <div className="font-bold text-slate-700">Alternative Options:</div>
+          <ul className="list-disc list-inside text-[11px] text-slate-600 space-y-1">
+            <li>You can also set <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-900">VITE_GOOGLE_MAPS_API_KEY=your_key</code> in your <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-900">.env</code> file.</li>
+            <li>Or click <b>Engine: Leaflet OSM</b> in the top-left corner to use free OpenStreetMap tiles!</li>
           </ul>
         </div>
       </div>
