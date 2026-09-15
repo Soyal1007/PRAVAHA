@@ -11,6 +11,7 @@ interface GoogleMapViewProps {
   onSelectEntity?: (type: 'vehicle' | 'shipment' | 'incident' | 'road' | 'warehouse', id: string) => void;
   center?: { lat: number; lng: number };
   zoom?: number;
+  onSwitchToLeaflet?: () => void;
 }
 
 const createSvgDataUrl = (svgString: string) => {
@@ -51,6 +52,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
   onSelectEntity,
   center = NORTHEAST_CENTER,
   zoom = 7,
+  onSwitchToLeaflet,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
@@ -586,14 +588,23 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
               <Save className="w-4 h-4" />
               <span>Save & Reload</span>
             </button>
+            {onSwitchToLeaflet && (
+              <button
+                onClick={onSwitchToLeaflet}
+                className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center space-x-1.5 transition-colors cursor-pointer shrink-0 shadow-sm"
+              >
+                <span>Switch to Leaflet OSM</span>
+              </button>
+            )}
           </div>
         </div>
 
         <div className="text-xs text-slate-600 space-y-1 pt-1">
           <div className="font-bold text-slate-700">Alternative Options:</div>
           <ul className="list-disc list-inside text-[11px] text-slate-600 space-y-1">
-            <li>You can also set <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-900">VITE_GOOGLE_MAPS_API_KEY=your_key</code> in your <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-900">.env</code> file.</li>
-            <li>Or click <b>Engine: Leaflet OSM</b> in the top-left corner to use free OpenStreetMap tiles!</li>
+            <li>Ensure <b>Maps JavaScript API</b> is enabled in your Google Cloud Console project.</li>
+            <li>If restricting by HTTP Referrer in GCP, ensure your Vercel URL (<code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-900">*.vercel.app/*</code>) is added to allowed referrers.</li>
+            <li>Or click <b>Switch to Leaflet OSM</b> above to use free, high-resolution OpenStreetMap tiles with zero key setup required!</li>
           </ul>
         </div>
       </div>

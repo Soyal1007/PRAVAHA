@@ -81,6 +81,7 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
           onSelectEntity={onSelectEntity}
           center={selectedPreset.center}
           zoom={selectedPreset.zoom}
+          onSwitchToLeaflet={() => setProvider('leaflet')}
         />
       ) : (
         <LeafletMapView

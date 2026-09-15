@@ -8,7 +8,7 @@
  */
 
 // Paste your Google Maps Demo key here if not using .env
-export const DEFAULT_GOOGLE_MAPS_KEY = '';
+export const DEFAULT_GOOGLE_MAPS_KEY = 'AIzaSyC-5TuGNVVN9t7gs3wzepN10hm-obLHs1s';
 
 export const getGoogleMapsApiKey = (): string => {
   const envKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
