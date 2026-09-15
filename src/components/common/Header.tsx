@@ -47,39 +47,52 @@ export const Header: React.FC<HeaderProps> = ({
   const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [showNotifPopover, setShowNotifPopover] = useState(false);
   const [showQuickNav, setShowQuickNav] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const QUICK_SECTIONS = [
     { id: 'landingPage', label: 'Main Overview', icon: LayoutDashboard },
-    { id: 'liveMap', label: 'Live GIS Map', icon: Map },
     { id: 'commandCenter', label: 'Command Center', icon: LayoutDashboard },
-    { id: 'analytics', label: 'Analytics & Charts', icon: BarChart3 },
+    { id: 'liveMap', label: 'Live GIS Map', icon: Map },
+    { id: 'n8nCallAutomation', label: 'n8n Phone Hotline', icon: LayoutDashboard },
+    { id: 'routeGuard', label: 'RouteGuard Engine', icon: LayoutDashboard },
     { id: 'fleetPulse', label: 'Fleet Pulse', icon: Truck },
+    { id: 'analytics', label: 'Analytics & Charts', icon: BarChart3 },
     { id: 'helpSupport', label: 'Help & Guides', icon: HelpCircle },
+    { id: 'settings', label: 'Settings', icon: LayoutDashboard },
   ];
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs font-body transition-all">
       <div className="px-3 sm:px-5 py-2 flex items-center justify-between gap-2.5">
         {/* Left Branding & Quick Section Menu */}
-        <div className="flex items-center space-x-2.5 shrink-0">
+        <div className="flex items-center space-x-2 shrink-0">
+          {/* Mobile Navigation Drawer Toggle */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-2 rounded-xl bg-slate-100 hover:bg-teal-50 border border-slate-200 text-slate-700 hover:text-[#087F8C] cursor-pointer transition-colors shrink-0"
+            aria-label="Toggle Mobile Navigation Menu"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+
           <button
             onClick={() => onNavigateToView('landingPage')}
-            className="flex items-center space-x-2.5 text-left cursor-pointer group"
+            className="flex items-center space-x-2 text-left cursor-pointer group"
           >
             <img
               src="/logo.png"
               alt="PRAVAHA Logo"
-              className="w-8 h-8 object-contain rounded-lg shadow-sm group-hover:scale-105 transition-transform"
+              className="w-7 h-7 sm:w-8 sm:h-8 object-contain rounded-lg shadow-sm group-hover:scale-105 transition-transform"
             />
             <div>
-              <div className="flex items-center space-x-1.5">
-                <h1 className="font-display font-black text-slate-900 text-lg tracking-tight leading-none group-hover:text-[#087F8C] transition-colors">
+              <div className="flex items-center space-x-1">
+                <h1 className="font-display font-black text-slate-900 text-base sm:text-lg tracking-tight leading-none group-hover:text-[#087F8C] transition-colors">
                   PRAVAHA
                 </h1>
-                <span className="text-[9px] bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider">
-                  GIS Core
+                <span className="text-[8px] sm:text-[9px] bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                  GIS
                 </span>
               </div>
               <p className="text-[10px] text-slate-500 font-semibold hidden xl:block">
@@ -307,6 +320,81 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Mobile Navigation Slide-Out Drawer Overlay */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex animate-fadeIn">
+          <div className="w-4/5 max-w-xs bg-white h-full shadow-2xl flex flex-col justify-between overflow-y-auto p-4 space-y-4 font-body">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center space-x-2">
+                  <img src="/logo.png" alt="PRAVAHA Logo" className="w-6 h-6 object-contain" />
+                  <span className="font-extrabold text-sm text-slate-900 font-display">
+                    PRAVAHA Menu
+                  </span>
+                </div>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-1.5 rounded-lg bg-slate-100 text-slate-500 font-bold text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-1">
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 mb-1">
+                  Navigation Workspaces
+                </div>
+                {[
+                  { id: 'landingPage', label: 'Main Overview', icon: LayoutDashboard },
+                  { id: 'commandCenter', label: 'Command Center', icon: LayoutDashboard },
+                  { id: 'liveMap', label: 'Live GIS Map', icon: Map },
+                  { id: 'n8nCallAutomation', label: 'n8n Voice Hotline', icon: LayoutDashboard },
+                  { id: 'routeGuard', label: 'RouteGuard AI Engine', icon: LayoutDashboard },
+                  { id: 'fleetPulse', label: 'Fleet Pulse Telemetry', icon: Truck },
+                  { id: 'weatherCore', label: 'Weather Core Radar', icon: LayoutDashboard },
+                  { id: 'nesdrDataCenter', label: 'ISRO/NESDR Data Center', icon: LayoutDashboard },
+                  { id: 'analytics', label: 'Analytics & Reports', icon: BarChart3 },
+                  { id: 'helpSupport', label: 'Help & Documentation', icon: HelpCircle },
+                  { id: 'settings', label: 'Settings', icon: LayoutDashboard },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const isActive = currentView === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        onNavigateToView(item.id);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold flex items-center space-x-2.5 transition-colors cursor-pointer ${
+                        isActive
+                          ? 'bg-teal-50 text-[#087F8C] border-l-4 border-l-[#087F8C]'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 text-[#087F8C]" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-500 space-y-2">
+              <div className="flex items-center justify-between font-bold">
+                <span>Network State:</span>
+                <span className={isOffline ? 'text-amber-600' : 'text-emerald-600'}>
+                  {isOffline ? 'OFFLINE' : 'ONLINE'}
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400">PRAVAHA Mobile GIS Node v2.4.0</p>
+            </div>
+          </div>
+
+          <div className="flex-1" onClick={() => setIsMobileMenuOpen(false)} />
+        </div>
+      )}
     </header>
   );
 };

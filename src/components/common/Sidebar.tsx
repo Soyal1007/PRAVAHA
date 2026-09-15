@@ -119,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSelectView, onO
 
   return (
     <aside
-      className={`bg-white border-r border-slate-200/90 flex flex-col justify-between h-full overflow-hidden no-print select-none shrink-0 transition-all duration-300 font-body ${
+      className={`bg-white border-r border-slate-200/90 flex flex-col justify-between h-full overflow-hidden no-print select-none shrink-0 transition-all duration-300 font-body hidden md:flex ${
         collapsed ? 'w-20' : 'w-64'
       }`}
     >

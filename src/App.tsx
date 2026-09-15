@@ -83,7 +83,7 @@ const MainApp: React.FC = () => {
 
       case 'commandCenter':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <CommandCenter
               onNavigateToView={setCurrentView}
               onSelectEntity={(type, id) => setSelectedEntity({ type, id })}
@@ -93,7 +93,7 @@ const MainApp: React.FC = () => {
 
       case 'driverDashboard':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <DriverDashboard
               onNavigateToView={setCurrentView}
               onSelectEntity={(type, id) => setSelectedEntity({ type, id })}
@@ -103,7 +103,7 @@ const MainApp: React.FC = () => {
 
       case 'authorityDashboard':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <AuthorityDashboard
               onNavigateToView={setCurrentView}
               onSelectEntity={(type, id) => setSelectedEntity({ type, id })}
@@ -122,21 +122,21 @@ const MainApp: React.FC = () => {
 
       case 'n8nCallAutomation':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <N8nCallAutomationView />
           </div>
         );
 
       case 'routeGuard':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <RouteGuardView />
           </div>
         );
 
       case 'fleetPulse':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <FleetPulseView
               onNavigateToView={setCurrentView}
               onSelectEntity={(type, id) => setSelectedEntity({ type, id })}
@@ -146,84 +146,84 @@ const MainApp: React.FC = () => {
 
       case 'supplyGrid':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <SupplyGridView />
           </div>
         );
 
       case 'weatherCore':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <WeatherCoreView />
           </div>
         );
 
       case 'riskEngine':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <RiskEngineView />
           </div>
         );
 
       case 'nesdrDataCenter':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <NesdrDataCenterView />
           </div>
         );
 
       case 'fieldLink':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <FieldLinkView />
           </div>
         );
 
       case 'alertNet':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <AlertNetView onNavigateToView={setCurrentView} />
           </div>
         );
 
       case 'analytics':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <AnalyticsView />
           </div>
         );
 
       case 'reports':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <ReportsView />
           </div>
         );
 
       case 'helpSupport':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <HelpSupportView />
           </div>
         );
 
       case 'privacyPolicy':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <PrivacyPolicyView onNavigateToView={setCurrentView} />
           </div>
         );
 
       case 'terms':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <TermsView onNavigateToView={setCurrentView} />
           </div>
         );
 
       case 'settings':
         return (
-          <div className="p-6 max-w-[1650px] mx-auto view-enter-animation">
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <SettingsView />
           </div>
         );
