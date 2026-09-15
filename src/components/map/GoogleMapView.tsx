@@ -63,11 +63,15 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
 
   const { vehicles, shipments, roads, incidents, warehouses, hospitals, weatherEvents, nesdrDatasets, nesdrHazardZones } = useAppState();
 
-  // Dynamic Map Panning when center/zoom changes
+  // Dynamic Map Panning when center/zoom changes (Separate from map creation)
   useEffect(() => {
     if (mapInstanceRef.current && center) {
-      mapInstanceRef.current.panTo({ lat: center.lat, lng: center.lng });
-      mapInstanceRef.current.setZoom(zoom);
+      try {
+        mapInstanceRef.current.panTo({ lat: center.lat, lng: center.lng });
+        mapInstanceRef.current.setZoom(zoom);
+      } catch (e) {
+        console.warn('Error panning Google Map:', e);
+      }
     }
   }, [center, zoom]);
 
@@ -127,18 +131,15 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
     };
   }, [apiKey]);
 
-  // Initialize Map Instance
+  // Initialize Map Instance (Only ONCE when mapLoaded becomes true)
   useEffect(() => {
     if (!mapLoaded || !mapContainerRef.current) return;
-
-    if (mapInstanceRef.current) {
-      // Re-center if map instance exists
-      mapInstanceRef.current.panTo({ lat: center.lat, lng: center.lng });
-      mapInstanceRef.current.setZoom(zoom);
-      return;
-    }
+    if (mapInstanceRef.current) return;
 
     try {
+      // Clear container DOM to prevent blank white screen from re-instantiation
+      mapContainerRef.current.innerHTML = '';
+
       const map = new google.maps.Map(mapContainerRef.current, {
         center: { lat: center.lat, lng: center.lng },
         zoom,
@@ -184,7 +185,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
       }
       mapInstanceRef.current = null;
     };
-  }, [mapLoaded, center, zoom]);
+  }, [mapLoaded]);
 
   // Render Map Layers & Markers
   useEffect(() => {
@@ -600,8 +601,15 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
   }
 
   return (
-    <div className="relative w-full rounded-xl overflow-hidden border border-slate-200 shadow-2xs">
-      <div ref={mapContainerRef} style={{ height, width: '100%' }} />
+    <div className="relative w-full rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100" style={{ height }}>
+      {!mapLoaded && (
+        <div className="absolute inset-0 bg-slate-100 flex flex-col items-center justify-center space-y-2 z-[20]">
+          <div className="w-8 h-8 border-4 border-[#087F8C] border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-xs font-bold text-slate-600">Loading Google Maps GIS Layer...</span>
+        </div>
+      )}
+
+      <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />
 
       {/* Provider Badge */}
       <div className="absolute top-3 right-3 z-[10] bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-md border border-slate-200 shadow-xs flex items-center space-x-1.5 text-[10px] font-bold text-[#087F8C]">
