@@ -20,18 +20,18 @@ export const AdminDashboard: React.FC<DashboardProps> = ({ onNavigateToView, onS
 
   // Chart 1 Data: Fleet Operational State Pie Chart
   const fleetPieData = [
-    { label: 'In-Transit Relief', value: vehicles.filter((v) => v.status === 'In Transit').length, color: '#087F8C' },
-    { label: 'At-Risk Bypasses', value: vehicles.filter((v) => v.status === 'At Risk').length, color: '#F59E0B' },
-    { label: 'Stalled / Delayed', value: vehicles.filter((v) => v.status === 'Delayed').length, color: '#EF4444' },
-    { label: 'Available Standby', value: vehicles.filter((v) => v.status === 'Idle').length, color: '#10B981' },
+    { label: t('inTransitRelief'), value: vehicles.filter((v) => v.status === 'In Transit').length, color: '#087F8C' },
+    { label: t('atRiskBypasses'), value: vehicles.filter((v) => v.status === 'At Risk').length, color: '#F59E0B' },
+    { label: t('stalledDelayed'), value: vehicles.filter((v) => v.status === 'Delayed').length, color: '#EF4444' },
+    { label: t('availableStandby'), value: vehicles.filter((v) => v.status === 'Idle').length, color: '#10B981' },
   ];
 
   // Chart 2 Data: Highway Corridor Status Bar Chart
   const roadStatusBarData = [
-    { label: 'Open Passable Corridors', value: roads.filter((r) => r.status === 'Open').length, color: '#10B981' },
-    { label: 'Restricted Corridors', value: roads.filter((r) => r.status === 'Restricted').length, color: '#F59E0B' },
-    { label: 'Blocked Landslide Passes', value: roads.filter((r) => r.status === 'Blocked').length, color: '#EF4444' },
-    { label: 'Under Maintenance', value: roads.filter((r) => r.status === 'Under Maintenance').length, color: '#8B5CF6' },
+    { label: t('openPassableCorridors'), value: roads.filter((r) => r.status === 'Open').length, color: '#10B981' },
+    { label: t('restrictedCorridors'), value: roads.filter((r) => r.status === 'Restricted').length, color: '#F59E0B' },
+    { label: t('blockedLandslidePasses'), value: roads.filter((r) => r.status === 'Blocked').length, color: '#EF4444' },
+    { label: t('underMaintenance'), value: roads.filter((r) => r.status === 'Under Maintenance').length, color: '#8B5CF6' },
   ];
 
   return (
@@ -45,14 +45,14 @@ export const AdminDashboard: React.FC<DashboardProps> = ({ onNavigateToView, onS
           <div>
             <div className="flex items-center space-x-3">
               <h2 className="font-display font-black text-2xl tracking-tight text-white">
-                Master Control Tower (Administrator)
+                {t('adminBannerTitle')}
               </h2>
               <span className="bg-teal-400/20 text-teal-200 text-xs font-mono font-bold px-3 py-1 rounded-full uppercase border border-teal-400/30">
-                Full Privileges
+                {t('fullPrivileges')}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-2xl">
-              Full platform oversight, real-time audit event logs, graphical intelligence, and cross-state mountain corridor routing.
+              {t('adminBannerSub')}
             </p>
           </div>
         </div>
@@ -63,14 +63,14 @@ export const AdminDashboard: React.FC<DashboardProps> = ({ onNavigateToView, onS
             className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2"
           >
             <BarChart3 className="w-4 h-4 text-teal-300" />
-            <span>Full Analytics Hub</span>
+            <span>{t('fullAnalyticsHub')}</span>
           </button>
 
           <button
             onClick={() => onNavigateToView('reports')}
             className="bg-white text-[#087F8C] hover:bg-teal-50 px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all shadow-md cursor-pointer"
           >
-            Export Executive Audit
+            {t('exportExecutiveAudit')}
           </button>
         </div>
       </div>
@@ -79,11 +79,11 @@ export const AdminDashboard: React.FC<DashboardProps> = ({ onNavigateToView, onS
       <div data-tour="command-kpis" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            Total Active Fleet
+            {t('totalActiveFleet')}
           </div>
           <div className="flex items-baseline space-x-2">
             <span className="text-3xl font-black text-slate-900 font-display">
-              {vehicles.length} Trucks
+              {vehicles.length} {t('trucks')}
             </span>
             <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">
               100% Online
@@ -94,14 +94,14 @@ export const AdminDashboard: React.FC<DashboardProps> = ({ onNavigateToView, onS
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            Active Road Blockages
+            {t('activeRoadBlockages')}
           </div>
           <div className="flex items-baseline space-x-2">
             <span className="text-3xl font-black text-red-600 font-display">
-              {activeBlockages.length} Corridors
+              {activeBlockages.length} {t('corridors')}
             </span>
             <span className="text-xs text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded-md">
-              Action Req.
+              {t('actionRequired')}
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium pt-1">NH-10 & NH-2 Landslide Passes</p>
@@ -109,7 +109,7 @@ export const AdminDashboard: React.FC<DashboardProps> = ({ onNavigateToView, onS
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            Critical Emergency Alerts
+            {t('criticalEmergencyAlerts')}
           </div>
           <div className="flex items-baseline space-x-2">
             <span className="text-3xl font-black text-amber-600 font-display">
@@ -121,7 +121,7 @@ export const AdminDashboard: React.FC<DashboardProps> = ({ onNavigateToView, onS
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            System Uptime & Node Health
+            {t('systemUptime')}
           </div>
           <div className="flex items-baseline space-x-2">
             <span className="text-3xl font-black text-emerald-600 font-display">99.98%</span>

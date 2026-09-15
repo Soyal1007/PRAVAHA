@@ -55,11 +55,11 @@ export const InSituGuidedTour: React.FC<InSituGuidedTourProps> = ({
   const [isVoiceEnabled, setIsVoiceEnabled] = useState<boolean>(true);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
 
-  // Automatically pick the most context-aware tour when opened
+  // Automatically pick the most context-aware tour when opened or user role changes
   useEffect(() => {
     if (!isOpen) return;
 
-    const effectiveRole = initialRole || currentUser?.role;
+    const effectiveRole = currentUser?.role || initialRole;
     if (effectiveRole && ROLE_TOURS[effectiveRole]) {
       setActiveTourId(`role-${effectiveRole}`);
     } else if (AREA_TOURS[currentView]) {
@@ -68,7 +68,7 @@ export const InSituGuidedTour: React.FC<InSituGuidedTourProps> = ({
       setActiveTourId('master');
     }
     setCurrentStepIndex(0);
-  }, [isOpen, currentView, initialRole, currentUser]);
+  }, [isOpen, currentUser?.role, initialRole]);
 
   // Resolve current active tour object
   const getActiveConfig = (): GuidedTourConfig => {
@@ -175,7 +175,7 @@ export const InSituGuidedTour: React.FC<InSituGuidedTourProps> = ({
   useEffect(() => {
     if (!isOpen || !currentStep) return;
 
-    if (currentStep.requiredView) {
+    if (currentStep.requiredView && currentStep.requiredView !== currentView) {
       onNavigateToView(currentStep.requiredView);
     }
 

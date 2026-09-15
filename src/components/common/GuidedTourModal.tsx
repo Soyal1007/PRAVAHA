@@ -58,7 +58,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    const effectiveRole = initialRole || currentUser?.role;
+    const effectiveRole = currentUser?.role || initialRole;
     if (effectiveRole && ROLE_TOURS[effectiveRole]) {
       setActiveTourId(`role-${effectiveRole}`);
     } else if (AREA_TOURS[currentView]) {
@@ -67,7 +67,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({
       setActiveTourId('master');
     }
     setCurrentStepIndex(0);
-  }, [isOpen, currentView, initialRole, currentUser]);
+  }, [isOpen, currentUser?.role, initialRole]);
 
   const getActiveConfig = (): GuidedTourConfig => {
     if (activeTourId === 'master') return MASTER_TOUR;
