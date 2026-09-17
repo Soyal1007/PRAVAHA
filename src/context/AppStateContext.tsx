@@ -92,6 +92,7 @@ interface AppStateContextType {
   acknowledgeAlert: (alertId: string) => void;
   notifyDrivers: (alertId: string) => void;
   notifyAuthority: (alertId: string) => void;
+  addNotification: (title: string, message: string, type?: 'Critical' | 'Operations' | 'System') => void;
   syncOfflineQueue: () => void;
   resetAllState: () => void;
   selectedEntity: { type: 'vehicle' | 'shipment' | 'incident' | 'road' | 'warehouse'; id: string } | null;
@@ -548,6 +549,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         acknowledgeAlert,
         notifyDrivers,
         notifyAuthority,
+        addNotification,
         syncOfflineQueue,
         resetAllState,
         selectedEntity,

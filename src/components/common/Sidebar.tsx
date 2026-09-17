@@ -103,6 +103,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSelectView, onO
           badgeColor: 'bg-teal-100 text-teal-800 font-bold',
         },
         {
+          id: 'meshDiagnostics',
+          label: 'Offline Mesh Diagnostics',
+          icon: Radio,
+          iconColor: 'text-[#087F8C]',
+          badge: 'BLE Mesh',
+          badgeColor: 'bg-teal-100 text-teal-900 font-bold',
+        },
+        {
           id: 'alertNet',
           label: t('alertNet'),
           icon: Bell,

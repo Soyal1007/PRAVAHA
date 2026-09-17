@@ -62,6 +62,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
   const [mapLoaded, setMapLoaded] = useState<boolean>(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [inputKey, setInputKey] = useState<string>('');
+  const [mapInitState, setMapInitState] = useState<number>(0);
 
   const { vehicles, shipments, roads, incidents, warehouses, hospitals, weatherEvents, nesdrDatasets, nesdrHazardZones } = useAppState();
 
@@ -133,7 +134,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
     };
   }, [apiKey]);
 
-  // Initialize Map Instance (Only ONCE when mapLoaded becomes true)
+  // Initialize Map Instance (Only ONCE when container is mounted and mapLoaded is true)
   useEffect(() => {
     if (!mapLoaded || !mapContainerRef.current) return;
     if (mapInstanceRef.current) return;
@@ -175,6 +176,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
       });
 
       mapInstanceRef.current = map;
+      setMapInitState(prev => prev + 1);
     } catch (err: any) {
       console.error('Error initializing Google Map:', err);
       setLoadError(err.message || 'Error initializing Google Maps.');
@@ -187,7 +189,7 @@ export const GoogleMapView: React.FC<GoogleMapViewProps> = ({
       }
       mapInstanceRef.current = null;
     };
-  }, [mapLoaded]);
+  }, [mapLoaded, mapInitState]);
 
   // Render Map Layers & Markers
   useEffect(() => {

@@ -23,12 +23,16 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { LANGUAGES, LanguageCode } from '../../i18n/translations';
 
+import { MeshStatusBadge } from './MeshStatusBadge';
+
 interface HeaderProps {
   onOpenSearch: () => void;
   onOpenReportModal: () => void;
   onToggleAIChat: () => void;
   onNavigateToView: (view: string) => void;
   onOpenTour?: () => void;
+  onOpenDiagnostics?: () => void;
+  onOpenDemoModal?: () => void;
   currentView?: string;
 }
 

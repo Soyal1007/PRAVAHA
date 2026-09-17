@@ -26,6 +26,8 @@ import { SupplyGridView } from './components/views/SupplyGridView';
 import { WeatherCoreView } from './components/views/WeatherCoreView';
 import { RiskEngineView } from './components/views/RiskEngineView';
 import { FieldLinkView } from './components/views/FieldLinkView';
+import { MeshDiagnosticsView } from './components/views/MeshDiagnosticsView';
+import { JudgeDemoModal } from './components/common/JudgeDemoModal';
 import { AlertNetView } from './components/views/AlertNetView';
 import { AnalyticsView } from './components/views/AnalyticsView';
 import { NesdrDataCenterView } from './components/views/NesdrDataCenterView';
@@ -46,6 +48,7 @@ const MainApp: React.FC = () => {
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
   const [isAIChatOpen, setIsAIChatOpen] = useState<boolean>(false);
   const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
+  const [isJudgeDemoOpen, setIsJudgeDemoOpen] = useState<boolean>(false);
 
   const [selectedEntity, setSelectedEntity] = useState<{
     type: 'vehicle' | 'shipment' | 'incident' | 'road' | 'warehouse';
@@ -179,6 +182,13 @@ const MainApp: React.FC = () => {
           </div>
         );
 
+      case 'meshDiagnostics':
+        return (
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
+            <MeshDiagnosticsView onOpenDemoModal={() => setIsJudgeDemoOpen(true)} />
+          </div>
+        );
+
       case 'alertNet':
         return (
           <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
@@ -271,6 +281,8 @@ const MainApp: React.FC = () => {
         onToggleAIChat={() => setIsAIChatOpen((prev) => !prev)}
         onNavigateToView={setCurrentView}
         onOpenTour={() => setIsTourOpen(true)}
+        onOpenDiagnostics={() => setCurrentView('meshDiagnostics')}
+        onOpenDemoModal={() => setIsJudgeDemoOpen(true)}
         currentView={currentView}
       />
 
@@ -315,6 +327,13 @@ const MainApp: React.FC = () => {
       <AIChatbot
         isOpen={isAIChatOpen}
         onClose={() => setIsAIChatOpen(false)}
+      />
+
+      {/* Judge Offline Mesh Demonstration Modal */}
+      <JudgeDemoModal
+        isOpen={isJudgeDemoOpen}
+        onClose={() => setIsJudgeDemoOpen(false)}
+        onNavigateToView={setCurrentView}
       />
 
       {/* In-Situ Spotlight Guided Tour */}
