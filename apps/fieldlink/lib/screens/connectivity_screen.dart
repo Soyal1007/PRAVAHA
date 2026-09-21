@@ -7,10 +7,10 @@ import '../models/mesh_node.dart';
 class ConnectivityScreen extends StatefulWidget {
   final BleMeshService bleService;
 
-  const ConnectivityScreen({Key? key, required this.bleService}) : super(key: key);
+  const ConnectivityScreen({super.key, required this.bleService});
 
   @override
-  _ConnectivityScreenState createState() => _ConnectivityScreenState();
+  State<ConnectivityScreen> createState() => _ConnectivityScreenState();
 }
 
 class _ConnectivityScreenState extends State<ConnectivityScreen> {
@@ -27,6 +27,7 @@ class _ConnectivityScreenState extends State<ConnectivityScreen> {
   Future<void> _refreshState() async {
     final discovered = await widget.bleService.getNearbyPeers();
     final unsynced = await OfflineStorage.instance.getUnsyncedReports();
+    if (!mounted) return;
     setState(() {
       peers = discovered;
       unsyncedCount = unsynced.length;
@@ -34,13 +35,15 @@ class _ConnectivityScreenState extends State<ConnectivityScreen> {
   }
 
   Future<void> _triggerSync() async {
+    final messenger = ScaffoldMessenger.of(context);
     setState(() => isSyncing = true);
     final syncEngine = SyncEngine();
     final count = await syncEngine.syncOutbox();
     await _refreshState();
+    if (!mounted) return;
     setState(() => isSyncing = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       SnackBar(content: Text('Sync complete! $count reports synced to PRAVAHA cloud.')),
     );
   }
@@ -66,7 +69,7 @@ class _ConnectivityScreenState extends State<ConnectivityScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('NEARBY MESH PEERS', style: TextStyle(color: Colors.slate400, fontWeight: FontWeight.bold, fontSize: 12)),
+                const Text('NEARBY MESH PEERS', style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold, fontSize: 12)),
                 IconButton(icon: const Icon(Icons.refresh, color: Colors.tealAccent), onPressed: _refreshState),
               ],
             ),
@@ -76,7 +79,7 @@ class _ConnectivityScreenState extends State<ConnectivityScreen> {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
                     child: const Center(
-                      child: Text('Scanning for nearby PRAVAHA BLE nodes (Phone B / Relay)...', style: TextStyle(color: Colors.slate400, fontSize: 12)),
+                      child: Text('Scanning for nearby PRAVAHA BLE nodes (Phone B / Relay)...', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
                     ),
                   )
                 : ListView.builder(
@@ -91,7 +94,7 @@ class _ConnectivityScreenState extends State<ConnectivityScreen> {
                         child: ListTile(
                           leading: const Icon(Icons.phone_android, color: Colors.tealAccent),
                           title: Text(p.deviceName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                          subtitle: Text('Node ID: ${p.nodeId} | Role: ${p.role}', style: const TextStyle(color: Colors.slate400, fontSize: 11)),
+                          subtitle: Text('Node ID: ${p.nodeId} | Role: ${p.role}', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
                           trailing: Text('${p.rssi} dBm', style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
                         ),
                       );
@@ -123,16 +126,16 @@ class _ConnectivityScreenState extends State<ConnectivityScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.slate800),
+        border: Border.all(color: const Color(0xFF334155)),
       ),
       child: Row(
         children: [
-          CircleAvatar(backgroundColor: color.withOpacity(0.2), child: Icon(icon, color: color, size: 20)),
+          CircleAvatar(backgroundColor: color.withAlpha(50), child: Icon(icon, color: color, size: 20)),
           const SizedBox(width: 14),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(color: Colors.slate400, fontSize: 11, fontWeight: FontWeight.bold)),
+              Text(title, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold)),
               const SizedBox(height: 2),
               Text(status, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
             ],

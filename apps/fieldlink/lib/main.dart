@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'screens/home_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Request BLE & Camera runtime permissions for offline mesh
+  await [
+    Permission.bluetoothScan,
+    Permission.bluetoothAdvertise,
+    Permission.bluetoothConnect,
+    Permission.location,
+    Permission.camera,
+  ].request();
+
   runApp(const PravahaFieldLinkApp());
 }
 
 class PravahaFieldLinkApp extends StatelessWidget {
-  const PravahaFieldLinkApp({Key? key}) : super(key: key);
+  const PravahaFieldLinkApp({super.key});
 
   @override
   Widget build(BuildContext context) {

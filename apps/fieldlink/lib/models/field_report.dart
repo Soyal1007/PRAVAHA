@@ -6,6 +6,7 @@ class FieldReport {
   final double longitude;
   final String locationName;
   final String? description;
+  final String? imagePath;
   final String syncStatus; // LOCAL_ONLY, OUTBOX, SYNCED
   final String createdAt;
   final String originNodeId;
@@ -18,6 +19,7 @@ class FieldReport {
     required this.longitude,
     required this.locationName,
     this.description,
+    this.imagePath,
     required this.syncStatus,
     required this.createdAt,
     required this.originNodeId,
@@ -32,6 +34,7 @@ class FieldReport {
       'longitude': longitude,
       'locationName': locationName,
       'description': description,
+      'imagePath': imagePath,
       'syncStatus': syncStatus,
       'createdAt': createdAt,
       'originNodeId': originNodeId,
@@ -47,6 +50,7 @@ class FieldReport {
       longitude: map['longitude'] is int ? (map['longitude'] as int).toDouble() : map['longitude'],
       locationName: map['locationName'],
       description: map['description'],
+      imagePath: map['imagePath'],
       syncStatus: map['syncStatus'],
       createdAt: map['createdAt'],
       originNodeId: map['originNodeId'],

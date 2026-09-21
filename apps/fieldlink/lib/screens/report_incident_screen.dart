@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/field_report.dart';
 import '../services/offline_storage.dart';
 import '../services/ble_mesh_service.dart';
@@ -6,10 +8,10 @@ import '../services/ble_mesh_service.dart';
 class ReportIncidentScreen extends StatefulWidget {
   final BleMeshService bleService;
 
-  const ReportIncidentScreen({Key? key, required this.bleService}) : super(key: key);
+  const ReportIncidentScreen({super.key, required this.bleService});
 
   @override
-  _ReportIncidentScreenState createState() => _ReportIncidentScreenState();
+  State<ReportIncidentScreen> createState() => _ReportIncidentScreenState();
 }
 
 class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
@@ -17,6 +19,9 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
   String selectedSeverity = 'CRITICAL';
   final TextEditingController _locationController = TextEditingController(text: 'NH-10 Teesta Valley Segment');
   final TextEditingController _descController = TextEditingController();
+  
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
   bool isSubmitting = false;
 
   final List<Map<String, dynamic>> incidentTypes = [
@@ -30,39 +35,94 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
     {'type': 'SUPPLY_ISSUE', 'label': 'Supply Issue', 'icon': Icons.local_shipping, 'color': Colors.teal},
   ];
 
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? picked = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 80,
+      );
+      if (picked != null) {
+        setState(() => _selectedImage = File(picked.path));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not attach image: $e')),
+      );
+    }
+  }
+
+  void _showImagePickerModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.tealAccent),
+              title: const Text('Take Photo with Camera', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Colors.purpleAccent),
+              title: const Text('Choose from Gallery', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _submitReport() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
     setState(() => isSubmitting = true);
     
+    final thisNodeId = await widget.bleService.getThisNodeId();
     final String reportId = 'INC-${DateTime.now().millisecondsSinceEpoch}';
     final report = FieldReport(
       id: reportId,
       incidentType: selectedType,
       severity: selectedSeverity,
-      latitude: 27.1425, // Mock / GPS coordinate
+      latitude: 27.1425,
       longitude: 88.4231,
-      locationName: _locationController.text,
+      locationName: _locationController.text.isNotEmpty ? _locationController.text : 'NH-10 Segment',
       description: _descController.text.isNotEmpty ? _descController.text : 'Disruption reported from field.',
+      imagePath: _selectedImage?.path,
       syncStatus: 'LOCAL_ONLY',
       createdAt: DateTime.now().toIso8601String(),
-      originNodeId: 'PRV-FLD-8921',
+      originNodeId: thisNodeId,
     );
 
-    // 1. Save to persistent offline database
     await OfflineStorage.instance.insertReport(report);
-
-    // 2. Broadcast via BLE Mesh protocol
     await widget.bleService.broadcastIncidentReport(report);
+
+    if (!mounted) return;
 
     setState(() => isSubmitting = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       const SnackBar(
-        content: Text('Report saved to local storage & broadcasted via BLE Mesh!'),
+        content: Text('Report saved offline & broadcasted via BLE Mesh!'),
         backgroundColor: Color(0xFF087F8C),
       ),
     );
 
-    Navigator.pop(context);
+    navigator.pop();
   }
 
   @override
@@ -78,7 +138,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('1. SELECT INCIDENT TYPE', style: TextStyle(color: Colors.slate300, fontSize: 12, fontWeight: FontWeight.bold)),
+            const Text('1. SELECT INCIDENT TYPE', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 12, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             GridView.builder(
               shrinkWrap: true,
@@ -100,7 +160,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
                       color: isSelected ? const Color(0xFF087F8C) : const Color(0xFF1E293B),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? Colors.tealAccent : Colors.slate700,
+                        color: isSelected ? Colors.tealAccent : const Color(0xFF334155),
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -124,7 +184,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
               },
             ),
             const SizedBox(height: 20),
-            const Text('2. SEVERITY LEVEL', style: TextStyle(color: Colors.slate300, fontSize: 12, fontWeight: FontWeight.bold)),
+            const Text('2. SEVERITY LEVEL', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 12, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             Row(
               children: ['CRITICAL', 'HIGH', 'MODERATE', 'LOW'].map((sev) {
@@ -145,7 +205,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
               }).toList(),
             ),
             const SizedBox(height: 20),
-            const Text('3. LOCATION / ROAD NAME', style: TextStyle(color: Colors.slate300, fontSize: 12, fontWeight: FontWeight.bold)),
+            const Text('3. LOCATION / ROAD NAME', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 12, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextField(
               controller: _locationController,
@@ -158,7 +218,51 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text('4. FIELD NOTES (OPTIONAL)', style: TextStyle(color: Colors.slate300, fontSize: 12, fontWeight: FontWeight.bold)),
+            const Text('4. ATTACH PHOTO EVIDENCE (OPTIONAL)', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 12, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            _selectedImage == null
+                ? InkWell(
+                    onTap: _showImagePickerModal,
+                    child: Container(
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF334155)),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_a_photo, color: Colors.tealAccent, size: 24),
+                          SizedBox(width: 10),
+                          Text('Tap to Capture / Attach Photo', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ),
+                  )
+                : Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(_selectedImage!, height: 160, width: double.infinity, fit: BoxFit.cover),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: CircleAvatar(
+                          backgroundColor: Colors.black.withAlpha(180),
+                          radius: 16,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            icon: const Icon(Icons.close, color: Colors.white, size: 18),
+                            onPressed: () => setState(() => _selectedImage = null),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+            const SizedBox(height: 20),
+            const Text('5. FIELD NOTES (OPTIONAL)', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 12, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextField(
               controller: _descController,
@@ -166,7 +270,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
               style: const TextStyle(color: Colors.white, fontSize: 13),
               decoration: InputDecoration(
                 hintText: 'e.g. 50m road segment blocked by debris flow...',
-                hintStyle: const TextStyle(color: Colors.slate500),
+                hintStyle: const TextStyle(color: Color(0xFF64748B)),
                 filled: true,
                 fillColor: const Color(0xFF1E293B),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),

@@ -6,6 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.txt
+!.env.example
 
 node_modules
 dist
@@ -14,7 +16,11 @@ dist-ssr
 .env
 .env.*
 *.env
-!.env.example
+
+# Flutter / App build artifacts
+apps/fieldlink/build/
+apps/fieldlink/.metadata
+apps/fieldlink/pubspec.lock
 
 # Editor directories and files
 .vscode/*

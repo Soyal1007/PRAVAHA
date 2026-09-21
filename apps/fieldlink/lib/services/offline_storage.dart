@@ -10,7 +10,7 @@ class OfflineStorage {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('pravaha_fieldlink.db');
+    _database = await _initDB('pravaha_fieldlink_v2.db');
     return _database!;
   }
 
@@ -35,6 +35,7 @@ class OfflineStorage {
         longitude REAL NOT NULL,
         locationName TEXT NOT NULL,
         description TEXT,
+        imagePath TEXT,
         syncStatus TEXT NOT NULL,
         createdAt TEXT NOT NULL,
         originNodeId TEXT NOT NULL
