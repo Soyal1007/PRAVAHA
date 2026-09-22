@@ -83,7 +83,7 @@ export const MeshDiagnosticsView: React.FC<MeshDiagnosticsViewProps> = ({ onOpen
       refreshData();
     });
 
-    const interval = setInterval(refreshData, 2000);
+    const interval = setInterval(refreshData, 1500);
 
     return () => {
       unsub1();
@@ -100,6 +100,21 @@ export const MeshDiagnosticsView: React.FC<MeshDiagnosticsViewProps> = ({ onOpen
     meshManager.setPowerMode(mode);
   };
 
+  const handleBroadcastTestPacket = () => {
+    const msg = meshManager.createIncidentReport({
+      incidentType: 'Landslide',
+      severity: 'Critical',
+      road: 'NH-10 (Siliguri-Gangtok Corridor)',
+      latitude: 27.33,
+      longitude: 88.61,
+      description: 'Live Test Mesh Packet broadcast from web control panel',
+      reporterName: 'Web Diagnostics Console',
+    });
+    addLog(`Broadcast live test packet ${msg.messageId} over BLE Mesh!`, 'success');
+    setDiag(meshManager.getDiagnostics());
+    setQueue(meshManager.offlineQueue.getAllMessages());
+  };
+
   return (
     <div className="space-y-6 font-body pb-12">
       {/* Header Banner */}
@@ -107,11 +122,14 @@ export const MeshDiagnosticsView: React.FC<MeshDiagnosticsViewProps> = ({ onOpen
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
           <div className="space-y-1.5">
             <div className="flex items-center space-x-2 text-teal-400 font-mono text-xs font-bold uppercase tracking-wider">
-              <Radio className="w-4 h-4 animate-pulse" />
+              <Radio className="w-4 h-4 animate-pulse text-emerald-400" />
               <span>Offline Communication Subsystem</span>
+              <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] px-2 py-0.5 rounded-full font-black">
+                LIVE STREAMING
+              </span>
             </div>
             <h2 className="font-display font-black text-2xl sm:text-3xl text-white tracking-tight">
-              Mesh Network Diagnostics & Observability
+              Mesh Network Diagnostics & Control Panel
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl font-medium leading-relaxed">
               Real-time monitoring of local peer discovery, BLE store-and-forward queue, node identity, hop propagation, de-duplication cache, and cloud gateway synchronization.
@@ -119,6 +137,14 @@ export const MeshDiagnosticsView: React.FC<MeshDiagnosticsViewProps> = ({ onOpen
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              onClick={handleBroadcastTestPacket}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-2xl text-xs font-black flex items-center space-x-2 shadow-lg cursor-pointer transition-all border border-emerald-400"
+            >
+              <Zap className="w-4 h-4 text-emerald-200 animate-bounce" />
+              <span>Broadcast Live Test Packet</span>
+            </button>
+
             <button
               onClick={() => setIsPairingOpen(true)}
               className="bg-[#087F8C] hover:bg-[#075E68] text-white px-4 py-3 rounded-2xl text-xs font-black flex items-center space-x-2 shadow-lg cursor-pointer transition-all border border-teal-500"
@@ -130,9 +156,9 @@ export const MeshDiagnosticsView: React.FC<MeshDiagnosticsViewProps> = ({ onOpen
             {onOpenDemoModal && (
               <button
                 onClick={onOpenDemoModal}
-                className="bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-3 rounded-2xl text-xs font-black flex items-center space-x-2 shadow-lg cursor-pointer transition-all border border-emerald-600"
+                className="bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-3 rounded-2xl text-xs font-black flex items-center space-x-2 shadow-lg cursor-pointer transition-all border border-indigo-600"
               >
-                <PlayCircle className="w-4 h-4 text-emerald-200 animate-pulse" />
+                <PlayCircle className="w-4 h-4 text-indigo-200 animate-pulse" />
                 <span>Launch Judge Demo</span>
               </button>
             )}

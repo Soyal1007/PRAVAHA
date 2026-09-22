@@ -158,6 +158,14 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
               )}
 
               <button
+                onClick={() => onNavigateToView('meshDiagnostics')}
+                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black px-6 py-3.5 rounded-2xl text-sm transition-all shadow-xl flex items-center space-x-2.5 cursor-pointer transform hover:-translate-y-0.5 border border-emerald-300/60"
+              >
+                <Radio className="w-5 h-5 text-slate-950 animate-pulse" />
+                <span>BLE Mesh Control Panel</span>
+              </button>
+
+              <button
                 onClick={() => onNavigateToView('loginPortal')}
                 data-tour="hero-login-btn"
                 className="bg-white hover:bg-teal-50 text-[#087F8C] px-6 py-3.5 rounded-2xl font-black text-sm transition-all shadow-xl flex items-center space-x-2.5 cursor-pointer transform hover:-translate-y-0.5"

@@ -17,6 +17,7 @@ import {
   HelpCircle,
   Menu,
   ChevronDown,
+  Radio,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -57,6 +58,8 @@ export const Header: React.FC<HeaderProps> = ({
 
   const QUICK_SECTIONS = [
     { id: 'landingPage', label: 'Main Overview', icon: LayoutDashboard },
+    { id: 'meshDiagnostics', label: 'BLE Mesh Control Panel', icon: Radio },
+    { id: 'fieldLink', label: 'FieldLink Mesh Dispatcher', icon: Radio },
     { id: 'commandCenter', label: 'Command Center', icon: LayoutDashboard },
     { id: 'liveMap', label: 'Live GIS Map', icon: Map },
     { id: 'n8nCallAutomation', label: 'n8n Phone Hotline', icon: LayoutDashboard },
@@ -165,6 +168,17 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right Actions & Tools */}
         <div className="flex items-center space-x-1.5 shrink-0">
+          {/* BLE Mesh Control Panel Dedicated Button */}
+          <button
+            onClick={() => onNavigateToView('meshDiagnostics')}
+            data-tour="mesh-diagnostics-btn"
+            className="bg-gradient-to-r from-[#087F8C] to-teal-800 hover:from-[#065F66] hover:to-teal-900 text-white px-2.5 py-1.5 rounded-xl text-xs font-black flex items-center space-x-1.5 transition-all shadow-xs cursor-pointer shrink-0 border border-teal-400/40"
+            title="Open Live BLE Mesh Diagnostics & Control Panel"
+          >
+            <Radio className="w-3.5 h-3.5 text-teal-200 animate-pulse" />
+            <span className="hidden sm:inline">BLE Mesh</span>
+          </button>
+
           {/* Guided Tour */}
           {onOpenTour && (
             <button

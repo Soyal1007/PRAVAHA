@@ -68,6 +68,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSelectView, onO
       ],
     },
     {
+      group: 'BLE Mesh & Offline Sync',
+      items: [
+        {
+          id: 'meshDiagnostics',
+          label: 'BLE Mesh Diagnostics Panel',
+          icon: Radio,
+          iconColor: 'text-[#087F8C]',
+          badge: 'Live Monitor',
+          badgeColor: 'bg-emerald-100 text-emerald-900 font-bold',
+        },
+        {
+          id: 'fieldLink',
+          label: 'FieldLink Mesh Dispatcher',
+          icon: Radio,
+          iconColor: 'text-teal-600',
+          badge: pendingSyncCount > 0 ? `${pendingSyncCount} sync` : 'Peer BLE',
+          badgeColor: 'bg-teal-100 text-teal-800 font-bold',
+        },
+      ],
+    },
+    {
       group: 'Logistics & Supply',
       items: [
         {
@@ -92,24 +113,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSelectView, onO
       ],
     },
     {
-      group: 'Field Link & System',
+      group: 'System & Alerts',
       items: [
-        {
-          id: 'fieldLink',
-          label: t('fieldLink'),
-          icon: Radio,
-          iconColor: 'text-teal-600',
-          badge: pendingSyncCount > 0 ? `${pendingSyncCount} sync` : null,
-          badgeColor: 'bg-teal-100 text-teal-800 font-bold',
-        },
-        {
-          id: 'meshDiagnostics',
-          label: 'Offline Mesh Diagnostics',
-          icon: Radio,
-          iconColor: 'text-[#087F8C]',
-          badge: 'BLE Mesh',
-          badgeColor: 'bg-teal-100 text-teal-900 font-bold',
-        },
         {
           id: 'alertNet',
           label: t('alertNet'),
