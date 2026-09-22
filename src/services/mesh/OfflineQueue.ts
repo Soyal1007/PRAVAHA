@@ -54,6 +54,36 @@ export class OfflineQueue {
     }
   }
 
+  updateVerificationStatus(
+    messageId: string,
+    status: 'Pending Verification' | 'Verified & Admitted' | 'Rejected',
+    verifiedBy?: string,
+    reason?: string
+  ): MeshMessage | undefined {
+    const existing = this.queue.get(messageId);
+    if (existing) {
+      const payload = {
+        ...(existing.payload as any),
+        verificationStatus: status,
+        verifiedBy: verifiedBy || 'System Admin',
+        verifiedAt: new Date().toISOString(),
+        rejectionReason: reason,
+      };
+      const updated: MeshMessage = {
+        ...existing,
+        verificationStatus: status,
+        verifiedBy: verifiedBy || 'System Admin',
+        verifiedAt: new Date().toISOString(),
+        rejectionReason: reason,
+        payload,
+      };
+      this.queue.set(messageId, updated);
+      this.persist();
+      return updated;
+    }
+    return undefined;
+  }
+
   getPendingSyncMessages(): MeshMessage[] {
     const list = Array.from(this.queue.values()).filter(
       m => m.deliveryState !== 'SYNCED' && m.deliveryState !== 'EXPIRED' && m.deliveryState !== 'FAILED'

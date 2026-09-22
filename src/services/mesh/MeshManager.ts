@@ -128,7 +128,39 @@ export class MeshManager {
    */
   public createIncidentReport(payload: MeshIncidentPayload): MeshMessage {
     const messageId = `PRV-MSG-${Math.floor(100000 + Math.random() * 900000).toString(16).toUpperCase()}`;
-    
+
+    // Sample fallback photos if user didn't attach one
+    const samplePhotos: Record<string, string> = {
+      Landslide: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=800&q=80',
+      Flood: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=800&q=80',
+      'Road Damage': 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=800&q=80',
+      'Bridge Damage': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
+      Default: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?auto=format&fit=crop&w=800&q=80',
+    };
+
+    const finalPhotoUrl =
+      payload.photoUrl ||
+      samplePhotos[payload.incidentType] ||
+      samplePhotos['Default'];
+
+    const formattedTime = new Date().toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const enrichedPayload: MeshIncidentPayload = {
+      ...payload,
+      photoUrl: finalPhotoUrl,
+      sentTimestamp: payload.sentTimestamp || formattedTime,
+      sentPlace: payload.sentPlace || `${payload.road} (${payload.latitude.toFixed(4)}° N, ${payload.longitude.toFixed(4)}° E)`,
+      reporterName: payload.reporterName || 'Field Officer (BLE Mesh)',
+      reporterRole: payload.reporterRole || 'Field Agent',
+      verificationStatus: payload.verificationStatus || 'Pending Verification',
+    };
+
     const message: MeshMessage = {
       messageId,
       type: 'FIELD_INCIDENT',
@@ -137,11 +169,12 @@ export class MeshManager {
       ttl: 5,
       hopCount: 0,
       priority: payload.severity === 'Critical' ? 'CRITICAL' : 'HIGH',
-      payload,
+      payload: enrichedPayload,
       requiresCloudSync: true,
       deliveryState: 'CREATED',
       senderNodeId: this.localNode.nodeId,
-      signature: this.securityManager.generateSignature(messageId, this.localNode.nodeId, payload),
+      signature: this.securityManager.generateSignature(messageId, this.localNode.nodeId, enrichedPayload),
+      verificationStatus: 'Pending Verification',
       hopsHistory: [
         {
           hopNumber: 0,
@@ -162,6 +195,28 @@ export class MeshManager {
     this.attemptRelay(message);
 
     return message;
+  }
+
+  /**
+   * Verify and Admit a mesh package to central GIS & State
+   */
+  public verifyAndAdmitMessage(messageId: string, verifierName = 'System Admin'): MeshMessage | undefined {
+    const updated = this.offlineQueue.updateVerificationStatus(messageId, 'Verified & Admitted', verifierName);
+    if (updated) {
+      meshEventBus.emit('messageVerifiedAndAdmitted', { message: updated, verifierName });
+    }
+    return updated;
+  }
+
+  /**
+   * Reject a mesh package as invalid / false alarm
+   */
+  public rejectMessage(messageId: string, reason = 'Flagged as invalid / unverified by operator'): MeshMessage | undefined {
+    const updated = this.offlineQueue.updateVerificationStatus(messageId, 'Rejected', 'System Admin', reason);
+    if (updated) {
+      meshEventBus.emit('messageRejectedByAdmin', { message: updated, reason });
+    }
+    return updated;
   }
 
   /**

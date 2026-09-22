@@ -52,15 +52,27 @@ export interface MeshNode {
   pendingQueueSize: number;
 }
 
+export type PackageVerificationStatus = 'Pending Verification' | 'Verified & Admitted' | 'Rejected';
+
 export interface MeshIncidentPayload {
   incidentType: string;
   severity: 'Low' | 'Moderate' | 'High' | 'Critical';
   road: string;
+  locationName?: string;
+  district?: string;
+  state?: string;
   latitude: number;
   longitude: number;
   description: string;
   reporterName?: string;
+  reporterRole?: string;
   photoUrl?: string;
+  sentTimestamp?: string;
+  sentPlace?: string;
+  verificationStatus?: PackageVerificationStatus;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  rejectionReason?: string;
 }
 
 export interface MeshMessage {
@@ -79,6 +91,10 @@ export interface MeshMessage {
   signature?: string; // Message integrity signature
   syncedTimestamp?: string;
   syncedGatewayNodeId?: string;
+  verificationStatus?: PackageVerificationStatus;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  rejectionReason?: string;
   hopsHistory?: Array<{
     hopNumber: number;
     nodeId: string;
