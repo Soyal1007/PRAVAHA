@@ -38,6 +38,9 @@ import {
 import { OFFICIAL_NESDR_DATASETS, NESDR_HAZARD_ZONES } from '../data/nesdrDatasets';
 import { offlineStorage } from '../services/offlineStorage';
 import { evaluateRouteOption } from '../services/routeEngine';
+import { meshManager } from '../services/mesh/MeshManager';
+import { meshEventBus } from '../services/mesh/MeshEventBus';
+import { MeshMessage } from '../services/mesh/meshTypes';
 
 interface AppStateContextType {
   userRole: UserRole;
@@ -169,6 +172,136 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setNotifications(prev => [newNotif, ...prev]);
   };
 
+  // Helper to seamlessly integrate BLE Mesh payloads into PRAVAHA central ecosystem
+  const integrateMeshMessageToAppState = (message: MeshMessage, forceVerified = false, verifier = 'BLE Mesh Node') => {
+    if (message.type !== 'FIELD_INCIDENT') return;
+
+    const payload = message.payload as any;
+    const incidentId = `inc-mesh-${message.messageId}`;
+
+    setIncidents(prev => {
+      const existingIdx = prev.findIndex(i => i.id === incidentId || i.id === message.messageId);
+      if (existingIdx >= 0) {
+        if (forceVerified) {
+          const updated = [...prev];
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            status: 'Verified',
+            verificationStatus: 'True Alarm (Verified)',
+          };
+          return updated;
+        }
+        return prev;
+      }
+
+      const newInc: Incident = {
+        id: incidentId,
+        incidentType: payload.incidentType || 'Landslide',
+        location: {
+          lat: payload.latitude || 27.33,
+          lng: payload.longitude || 88.61,
+          name: payload.sentPlace || payload.road || 'NH-10 Corridor',
+        },
+        state: payload.state || 'West Bengal / Sikkim',
+        district: payload.district || 'Kalimpong',
+        roadName: payload.road || 'NH-10',
+        severity: payload.severity || 'Critical',
+        description: payload.description || 'Disruption transmitted over BLE Mesh ecosystem.',
+        photoUrl: payload.photoUrl || 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=800&q=80',
+        reporterName: `${payload.reporterName || 'Field Officer'} [Node ${message.originNodeId}]`,
+        reporterRole: payload.reporterRole || 'BLE Mesh Dispatch',
+        timestamp: payload.sentTimestamp || new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        status: forceVerified ? 'Verified' : 'Pending Sync',
+        affectedVehicleIds: ['veh-2048'],
+        affectedShipmentIds: ['ship-2048'],
+        verificationStatus: forceVerified ? 'True Alarm (Verified)' : 'Unverified (Pending Inspection)',
+        verificationSource: 'Field Report',
+        confidenceScore: forceVerified ? 98 : 88,
+      };
+
+      return [newInc, ...prev];
+    });
+
+    // Add Live Alert to Ecosystem
+    const newAlert: Alert = {
+      id: `alt-mesh-${message.messageId}`,
+      title: `BLE MESH PACKET: ${payload.incidentType || 'Hazard'} on ${payload.road || 'Corridor'}`,
+      severity: payload.severity === 'Critical' ? 'Critical' : 'Warning',
+      category: 'Disruption',
+      corridorOrLocation: payload.road || 'Corridor',
+      description: `${payload.description || 'Transmitted via offline mesh.'} (Reporter: ${payload.reporterName || message.originNodeId})`,
+      affectedShipmentsCount: 1,
+      affectedVehiclesCount: 1,
+      estimatedDelayMinutes: 120,
+      timestamp: new Date().toISOString(),
+      acknowledged: false,
+      actions: ['Reroute Shipments', 'Acknowledge'],
+    };
+    setAlerts(prev => [newAlert, ...prev]);
+
+    // System Notification & Audit
+    addNotification(
+      `BLE Mesh Packet ${message.messageId}`,
+      `${payload.incidentType || 'Hazard'} reported on ${payload.road || 'Corridor'}.`,
+      payload.severity === 'Critical' ? 'Critical' : 'Operations'
+    );
+    addSystemLog(`BLE Mesh Payload Integrated: ${message.messageId} (${payload.incidentType} on ${payload.road})`);
+
+    // Auto-block road if Critical or High
+    if (payload.severity === 'Critical' || payload.severity === 'High') {
+      if (payload.road) {
+        blockRoadSegment(payload.road, payload.description);
+      }
+    }
+  };
+
+  // Sync offline storage & BLE Mesh Queue event listeners
+  useEffect(() => {
+    const updatePendingCount = () => {
+      const pendingStorage = offlineStorage.getPendingReports().length + offlineStorage.getPendingGps().length;
+      const pendingMesh = meshManager.offlineQueue.getQueueSize();
+      setPendingSyncCount(pendingStorage + pendingMesh);
+    };
+
+    updatePendingCount();
+
+    // Direct Integration with Bluetooth Mesh Event Bus
+    const unsub1 = meshEventBus.on('messageCreated', ({ message }) => {
+      integrateMeshMessageToAppState(message);
+      updatePendingCount();
+    });
+
+    const unsub2 = meshEventBus.on('messageReceived', ({ message }) => {
+      integrateMeshMessageToAppState(message);
+      updatePendingCount();
+    });
+
+    const unsub3 = meshEventBus.on('messageVerifiedAndAdmitted', ({ message, verifierName }) => {
+      integrateMeshMessageToAppState(message, true, verifierName);
+      updatePendingCount();
+    });
+
+    const unsub4 = meshEventBus.on('autoSyncTriggered', () => {
+      syncOfflineQueue();
+    });
+
+    return () => {
+      unsub1();
+      unsub2();
+      unsub3();
+      unsub4();
+    };
+  }, []);
+
+  const handleSetIsOffline = (offline: boolean) => {
+    setIsOffline(offline);
+    meshManager.syncManager.setOnlineStatus(!offline);
+    if (!offline) {
+      // Automatic network reconnection sync: transmit queued mesh packets to central server
+      setTimeout(() => syncOfflineQueue(), 300);
+    }
+  };
+
   // State Propagation: Reroute Shipment
   const rerouteShipment = (shipmentId: string, newRouteOptionId: string) => {
     let targetShipment = shipments.find(s => s.id === shipmentId);
@@ -276,12 +409,18 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   // Block Road Segment -> Updates Command Center, Map, Risk, Vehicles, Shipments, RouteGuard & Alerts
-  const blockRoadSegment = (roadId: string, cause: string) => {
-    const road = roads.find(r => r.id === roadId);
-    const roadTitle = road ? road.roadName : 'Primary Highway';
+  const blockRoadSegment = (roadIdOrName: string, cause?: string) => {
+    const road = roads.find(
+      r => r.id === roadIdOrName ||
+        r.roadName.toLowerCase().includes(roadIdOrName.toLowerCase()) ||
+        roadIdOrName.toLowerCase().includes(r.roadName.toLowerCase())
+    );
+    const targetId = road ? road.id : roads[0]?.id || 'road-nh10';
+    const roadTitle = road ? road.roadName : roadIdOrName;
+    const causeText = cause || 'Severe disruption transmitted via BLE Mesh.';
 
     setRoads(prev =>
-      prev.map(r => (r.id === roadId ? { ...r, status: 'Blocked', riskScore: 95, riskLevel: 'Critical', causeOfDisruption: cause } : r))
+      prev.map(r => (r.id === targetId || r.roadName === roadTitle ? { ...r, status: 'Blocked', riskScore: 95, riskLevel: 'Critical', causeOfDisruption: causeText } : r))
     );
 
     // Update risk event
@@ -306,7 +445,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       severity: 'Critical',
       category: 'Disruption',
       corridorOrLocation: roadTitle,
-      description: cause || 'Severe landslide debris blocking all lanes.',
+      description: causeText,
       affectedShipmentsCount: affectedVehs.length,
       affectedVehiclesCount: affectedVehs.length,
       estimatedDelayMinutes: 180,
@@ -322,7 +461,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     );
 
     addNotification('Road Blockage Confirmed', `${roadTitle} is now BLOCKED. Affected shipments flagged for rerouting.`, 'Critical');
-    addSystemLog(`Blocked road segment ${roadTitle}: ${cause}`);
+    addSystemLog(`Blocked road segment ${roadTitle}: ${causeText}`);
   };
 
   const unblockRoadSegment = (roadId: string) => {
