@@ -1,23 +1,17 @@
 import React, { useState } from 'react';
 import {
   Database,
-  ShieldAlert,
-  Waves,
-  Mountain,
-  HardDrive,
   ExternalLink,
   Search,
   CheckCircle2,
-  AlertTriangle,
   RefreshCw,
   Info,
   Server,
   Layers,
-  FileCheck,
   Globe,
   Tag,
-  Calendar,
-  Lock,
+  Clock,
+  MapPin,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { NesdrDataset } from '../../types';
@@ -29,7 +23,9 @@ export const NesdrDataCenterView: React.FC = () => {
   const [selectedDomain, setSelectedDomain] = useState<string>('All');
   const [selectedClassification, setSelectedClassification] = useState<string>('All');
   const [testingEndpoint, setTestingEndpoint] = useState<string | null>(null);
-  const [testResult, setTestResult] = useState<{ id: string; status: 'SUCCESS' | 'WARNING'; pingMs: number } | null>(null);
+  const [testResult, setTestResult] = useState<{ id: string; status: 'SUCCESS' | 'WARNING'; pingMs: number } | null>(
+    null
+  );
   const [selectedDataset, setSelectedDataset] = useState<NesdrDataset | null>(nesdrDatasets[0]);
 
   // Filter datasets
@@ -56,93 +52,78 @@ export const NesdrDataCenterView: React.FC = () => {
     }, 1200);
   };
 
+  // Helper for honest status label
+  const getStatusBadge = (classification: string) => {
+    switch (classification) {
+      case 'BASELINE':
+        return { label: 'PRESERVED (Static)', bg: 'bg-slate-100 text-slate-700 border-slate-200' };
+      case 'OBSERVED':
+        return { label: 'EVENT SNAPSHOT', bg: 'bg-amber-50 text-amber-800 border-amber-200' };
+      case 'REAL-TIME':
+        return { label: 'OGC LIVE STREAM', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+      default:
+        return { label: 'CACHED CATALOG', bg: 'bg-blue-50 text-blue-700 border-blue-200' };
+    }
+  };
+
   return (
-    <div className="space-y-6 pb-12 font-body">
-      {/* Top Banner Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-[#087F8C] text-white p-6 sm:p-8 rounded-3xl shadow-xl border border-slate-800 relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="relative z-10 space-y-3 max-w-4xl">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="bg-teal-500/20 text-teal-300 border border-teal-500/30 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider flex items-center space-x-1.5">
-              <Database className="w-3.5 h-3.5" />
-              <span>Official Data Source Integration</span>
-            </span>
-            <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">
-              NESAC / ISRO & MDoNER
-            </span>
-          </div>
-
-          <h1 className="text-2xl sm:text-4xl font-display font-black tracking-tight leading-tight">
-            North Eastern Spatial Data Repository (NESDR) Data Center
+    <div className="space-y-5 font-body">
+      {/* Compact Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+        <div>
+          <h1 className="text-xl font-black text-slate-900 tracking-tight">
+            ISRO / NESDR Spatial Data Repository
           </h1>
-
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-            Ingesting verified GIS layers, landslide susceptibility vectors, flood inundation maps (FLEWS), 
-            and spatial road infrastructure directly from the official NESDR/NESAC portal (
-            <a
-              href="https://www.nesdr.gov.in/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-teal-300 hover:text-white font-extrabold underline inline-flex items-center space-x-1"
-            >
-              <span>www.nesdr.gov.in</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-            ).
+          <p className="text-xs text-slate-500 mt-0.5 flex items-center space-x-1.5">
+            <Clock className="w-3.5 h-3.5" />
+            <span>
+              Official NESAC / MDoNER spatial layers & landslide vulnerability maps (
+              <a
+                href="https://www.nesdr.gov.in/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-teal-700 underline font-semibold"
+              >
+                nesdr.gov.in
+              </a>
+              )
+            </span>
           </p>
+        </div>
 
-          {/* Quick Metrics Bar */}
-          <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/10">
-              <div className="text-slate-400 font-bold uppercase text-[10px]">Verified Datasets</div>
-              <div className="text-2xl font-black text-white mt-0.5">{nesdrDatasets.length} Cataloged</div>
-              <div className="text-[10px] text-teal-300 font-semibold mt-1">OGC WMS / PostGIS</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/10">
-              <div className="text-slate-400 font-bold uppercase text-[10px]">Spatial Hazard Zones</div>
-              <div className="text-2xl font-black text-amber-400 mt-0.5">{nesdrHazardZones.length} Vectors</div>
-              <div className="text-[10px] text-slate-300 font-semibold mt-1">Sikkim, Assam, Manipur, Meghalaya</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/10">
-              <div className="text-slate-400 font-bold uppercase text-[10px]">Active Map Overlays</div>
-              <div className="text-2xl font-black text-emerald-400 mt-0.5">
-                {nesdrDatasets.filter(d => d.activeOverlay).length} Enabled
-              </div>
-              <div className="text-[10px] text-emerald-300 font-semibold mt-1">Live Map Toggle Active</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/10">
-              <div className="text-slate-400 font-bold uppercase text-[10px]">Spatial Database</div>
-              <div className="text-2xl font-black text-cyan-300 mt-0.5">PostGIS 3.4</div>
-              <div className="text-[10px] text-cyan-200 font-semibold mt-1">EPSG:4326 Normalized</div>
-            </div>
-          </div>
+        <div className="flex flex-wrap gap-2 text-xs">
+          <span className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg font-bold text-slate-700">
+            {nesdrDatasets.length} Datasets Ingested
+          </span>
+          <span className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg font-bold text-slate-700">
+            {nesdrHazardZones.length} Hazard Polygons
+          </span>
         </div>
       </div>
 
       {/* Filter & Controls Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white p-3.5 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
         {/* Search */}
-        <div className="relative flex-1 min-w-[260px]">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+        <div className="relative flex-1 min-w-[240px]">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
             type="text"
             placeholder="Search NESDR datasets (e.g. Landslide, FLEWS, SISDP)..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#087F8C]"
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:border-teal-700"
           />
         </div>
 
         {/* Domain Filter */}
-        <div className="flex items-center space-x-2">
-          <span className="text-xs font-bold text-slate-500">Domain:</span>
+        <div className="flex items-center space-x-1.5">
+          <span className="font-bold text-slate-500">Domain:</span>
           <select
             value={selectedDomain}
             onChange={(e) => setSelectedDomain(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-extrabold text-slate-800 cursor-pointer"
+            className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800 cursor-pointer"
           >
-            <option value="All">All Domains (8)</option>
+            <option value="All">All Domains</option>
             <option value="Disaster Management">Disaster Management</option>
             <option value="Water Resource">Water Resource</option>
             <option value="Infrastructure">Infrastructure</option>
@@ -152,14 +133,14 @@ export const NesdrDataCenterView: React.FC = () => {
         </div>
 
         {/* Classification Filter */}
-        <div className="flex items-center space-x-2">
-          <span className="text-xs font-bold text-slate-500">Type:</span>
+        <div className="flex items-center space-x-1.5">
+          <span className="font-bold text-slate-500">Classification:</span>
           <select
             value={selectedClassification}
             onChange={(e) => setSelectedClassification(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-extrabold text-slate-800 cursor-pointer"
+            className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 font-semibold text-slate-800 cursor-pointer"
           >
-            <option value="All">All Types</option>
+            <option value="All">All Classifications</option>
             <option value="BASELINE">BASELINE (Static)</option>
             <option value="OBSERVED">OBSERVED (Event)</option>
             <option value="HISTORICAL">HISTORICAL (Baseline)</option>
@@ -168,89 +149,80 @@ export const NesdrDataCenterView: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Grid: Catalog Cards (Left) & Inspector Modal (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Dataset Catalog Grid (8 Cols) */}
-        <div className="lg:col-span-7 space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="text-base font-extrabold text-slate-900 flex items-center space-x-2">
-              <Layers className="w-4 h-4 text-[#087F8C]" />
-              <span>Cataloged Datasets ({filteredDatasets.length})</span>
+      {/* Main Catalog & Inspector Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Dataset Catalog Grid (7 Cols) */}
+        <div className="lg:col-span-7 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-1.5">
+              <Layers className="w-4 h-4 text-teal-700" />
+              <span>Cataloged NESDR Layers ({filteredDatasets.length})</span>
             </h2>
-            <span className="text-xs text-slate-500 font-semibold">
-              Showing official datasets from NESDR repository
-            </span>
+            <span className="text-[11px] text-slate-500">Select layer to view metadata provenance</span>
           </div>
 
-          <div className="space-y-3.5">
+          <div className="space-y-3">
             {filteredDatasets.map((ds) => {
               const isSelected = selectedDataset?.id === ds.id;
+              const status = getStatusBadge(ds.classification);
+
               return (
                 <div
                   key={ds.id}
                   onClick={() => setSelectedDataset(ds)}
-                  className={`bg-white rounded-2xl border p-4 transition-all cursor-pointer shadow-2xs ${
+                  className={`bg-white rounded-xl border p-4 transition-all cursor-pointer ${
                     isSelected
-                      ? 'border-[#087F8C] ring-2 ring-teal-500/20 shadow-md'
-                      : 'border-slate-200/90 hover:border-slate-300 hover:shadow-xs'
+                      ? 'border-teal-700 ring-2 ring-teal-700/20 shadow-xs'
+                      : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="bg-slate-900 text-white text-[10px] font-black px-2 py-0.5 rounded-md font-mono">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="bg-slate-900 text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded">
                           {ds.id}
                         </span>
                         <span
-                          className={`text-[10px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider ${
-                            ds.classification === 'BASELINE'
-                              ? 'bg-amber-100 text-amber-900'
-                              : ds.classification === 'OBSERVED'
-                              ? 'bg-cyan-100 text-cyan-900'
-                              : 'bg-emerald-100 text-emerald-900'
-                          }`}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded border ${status.bg}`}
                         >
-                          {ds.classification}
+                          {status.label}
                         </span>
-                        <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                        <span className="bg-slate-100 text-slate-600 text-[10px] font-semibold px-2 py-0.5 rounded">
                           {ds.domain}
                         </span>
                       </div>
 
-                      <h3 className="font-extrabold text-slate-900 text-base leading-snug pt-1">
+                      <h3 className="font-bold text-slate-900 text-sm leading-snug pt-0.5">
                         {ds.title}
                       </h3>
 
-                      <p className="text-slate-600 text-xs line-clamp-2 leading-relaxed">
+                      <p className="text-slate-500 text-xs line-clamp-2 leading-relaxed">
                         {ds.description}
                       </p>
                     </div>
 
-                    {/* Toggle Overlay Button */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleNesdrDatasetOverlay(ds.id);
                       }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center space-x-1.5 transition-colors cursor-pointer shrink-0 ${
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer shrink-0 ${
                         ds.activeOverlay
-                          ? 'bg-[#087F8C] text-white shadow-2xs'
+                          ? 'bg-teal-700 text-white'
                           : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                       }`}
                     >
-                      <CheckCircle2 className={`w-3.5 h-3.5 ${ds.activeOverlay ? 'text-teal-200' : 'text-slate-400'}`} />
-                      <span>{ds.activeOverlay ? 'Active Layer' : 'Enable Layer'}</span>
+                      {ds.activeOverlay ? 'Overlay Active' : 'Enable Overlay'}
                     </button>
                   </div>
 
-                  {/* Metadata Provenance Footer */}
-                  <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-2 font-medium">
-                    <div className="flex items-center space-x-1.5 truncate max-w-md">
-                      <Globe className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-2">
+                    <div className="flex items-center space-x-1 truncate max-w-xs">
+                      <Globe className="w-3.5 h-3.5 text-teal-700 shrink-0" />
                       <span className="truncate">{ds.sourceAgency}</span>
                     </div>
 
-                    <div className="flex items-center space-x-3 shrink-0 font-mono text-[10px]">
+                    <div className="flex items-center space-x-3 font-mono text-[10px]">
                       <span>Updated: <strong className="text-slate-700">{ds.lastUpdated}</strong></span>
                       <span>Format: <strong className="text-slate-700">{ds.dataFormat}</strong></span>
                     </div>
@@ -261,38 +233,38 @@ export const NesdrDataCenterView: React.FC = () => {
           </div>
         </div>
 
-        {/* Selected Dataset Detail Inspector (5 Cols) */}
-        <div className="lg:col-span-5 space-y-4">
+        {/* Dataset Detail Inspector (5 Cols) */}
+        <div className="lg:col-span-5 space-y-3">
           {selectedDataset ? (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-md p-5 sticky top-20 space-y-4">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 sticky top-20 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
-                  <span className="text-[10px] font-black text-teal-700 uppercase tracking-wider">
-                    Provenance Inspector
+                  <span className="text-[10px] font-bold text-teal-700 uppercase tracking-wider block">
+                    Dataset Provenance Inspector
                   </span>
-                  <h3 className="font-extrabold text-slate-900 text-lg leading-tight">
-                    {selectedDataset.title}
-                  </h3>
+                  <h3 className="font-bold text-slate-900 text-base">{selectedDataset.title}</h3>
                 </div>
-                <span className="bg-slate-100 text-slate-700 font-mono text-xs font-extrabold px-2.5 py-1 rounded-lg">
+                <span className="bg-slate-100 text-slate-700 font-mono text-xs font-bold px-2 py-1 rounded">
                   {selectedDataset.dataFormat}
                 </span>
               </div>
 
-              {/* Classification & Status Warning */}
-              <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 text-xs space-y-1.5">
-                <div className="flex items-center justify-between font-extrabold text-teal-900">
+              {/* Classification Info */}
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs space-y-1">
+                <div className="flex items-center justify-between font-bold text-slate-900">
                   <span className="flex items-center space-x-1">
-                    <Tag className="w-3.5 h-3.5 text-[#087F8C]" />
-                    <span>Data Classification: {selectedDataset.classification}</span>
+                    <Tag className="w-3.5 h-3.5 text-teal-700" />
+                    <span>Classification: {selectedDataset.classification}</span>
                   </span>
-                  <span className="text-[10px] bg-[#087F8C] text-white px-2 py-0.5 rounded">Verified</span>
+                  <span className="text-[10px] bg-teal-700 text-white px-2 py-0.5 rounded font-mono">
+                    NESDR VERIFIED
+                  </span>
                 </div>
-                <p className="text-teal-800 text-[11px] leading-relaxed">
+                <p className="text-slate-600 text-[11px] leading-relaxed">
                   {selectedDataset.classification === 'BASELINE' &&
-                    'Static spatial layer derived from satellite DEM or multi-year geological mapping. Used as a baseline hazard index.'}
+                    'Static spatial layer derived from satellite DEM or multi-year geological mapping.'}
                   {selectedDataset.classification === 'OBSERVED' &&
-                    'Event-driven satellite observation capturing actual monsoon flood extent. Data freshness: 2023-08-31.'}
+                    'Event-driven satellite observation capturing actual monsoon flood extent.'}
                   {selectedDataset.classification === 'HISTORICAL' &&
                     'Multi-year historical river erosion vector map tracking riverbank boundary shifts.'}
                   {selectedDataset.classification === 'REFERENCE' &&
@@ -300,69 +272,69 @@ export const NesdrDataCenterView: React.FC = () => {
                 </p>
               </div>
 
-              {/* Relevance to PRAVAHA */}
+              {/* PRAVAHA Integration */}
               <div className="space-y-1 text-xs">
-                <div className="font-extrabold text-slate-900 flex items-center space-x-1.5">
-                  <Info className="w-3.5 h-3.5 text-[#087F8C]" />
-                  <span>Integration with PRAVAHA Decision Engine:</span>
-                </div>
-                <p className="text-slate-600 leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
+                <span className="font-bold text-slate-900 flex items-center space-x-1">
+                  <Info className="w-3.5 h-3.5 text-teal-700" />
+                  <span>Integration Rationale:</span>
+                </span>
+                <p className="text-slate-600 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-[11px]">
                   {selectedDataset.relevanceToPravaha}
                 </p>
               </div>
 
-              {/* Dataset Metadata Grid */}
+              {/* Metadata Grid */}
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 space-y-0.5">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Source Authority</span>
-                  <div className="font-extrabold text-slate-900 text-xs truncate">
+                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-0.5">
+                  <span className="text-[9px] text-slate-400 font-bold uppercase block">Source Authority</span>
+                  <div className="font-bold text-slate-900 text-xs truncate">
                     {selectedDataset.sourceAgency}
                   </div>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 space-y-0.5">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Last Source Date</span>
-                  <div className="font-extrabold text-slate-900 text-xs">
+                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-0.5">
+                  <span className="text-[9px] text-slate-400 font-bold uppercase block">Last Source Update</span>
+                  <div className="font-bold text-slate-900 text-xs">
                     {selectedDataset.lastUpdated}
                   </div>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 space-y-0.5">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Layer Name</span>
+                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-0.5">
+                  <span className="text-[9px] text-slate-400 font-bold uppercase block">Layer Identifier</span>
                   <div className="font-mono font-bold text-slate-800 text-[11px] truncate">
                     {selectedDataset.layerName}
                   </div>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 space-y-0.5">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Features Count</span>
+                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-0.5">
+                  <span className="text-[9px] text-slate-400 font-bold uppercase block">Features Count</span>
                   <div className="font-mono font-bold text-slate-800 text-xs">
                     {selectedDataset.featuresCount.toLocaleString()} Polygons
                   </div>
                 </div>
               </div>
 
-              {/* Endpoint Health Check Tester */}
+              {/* Endpoint Health Check */}
               <div className="border-t border-slate-100 pt-3 space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-extrabold text-slate-900 flex items-center space-x-1.5">
-                    <Server className="w-3.5 h-3.5 text-teal-600" />
-                    <span>OGC Service Connection Check</span>
+                  <span className="font-bold text-slate-900 flex items-center space-x-1">
+                    <Server className="w-3.5 h-3.5 text-teal-700" />
+                    <span>OGC Service Status Check</span>
                   </span>
                   <button
                     onClick={() => handleTestEndpoint(selectedDataset)}
                     disabled={testingEndpoint === selectedDataset.id}
-                    className="bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-[#087F8C] px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center space-x-1 transition-colors cursor-pointer"
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded text-[11px] font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
                   >
                     <RefreshCw className={`w-3 h-3 ${testingEndpoint === selectedDataset.id ? 'animate-spin' : ''}`} />
-                    <span>{testingEndpoint === selectedDataset.id ? 'Pinging...' : 'Test Connection'}</span>
+                    <span>{testingEndpoint === selectedDataset.id ? 'Testing...' : 'Test Connection'}</span>
                   </button>
                 </div>
 
                 {testResult && testResult.id === selectedDataset.id && (
-                  <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-xs flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <div className="bg-emerald-50 border border-emerald-200 p-2 rounded text-xs flex items-center justify-between">
+                    <div className="flex items-center space-x-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                       <span className="font-bold text-emerald-900">Endpoint Reachable (HTTP 200 OK)</span>
                     </div>
-                    <span className="font-mono text-[10px] font-black text-emerald-700">{testResult.pingMs} ms</span>
+                    <span className="font-mono text-[10px] font-bold text-emerald-700">{testResult.pingMs} ms</span>
                   </div>
                 )}
 
@@ -371,7 +343,7 @@ export const NesdrDataCenterView: React.FC = () => {
                     href={selectedDataset.ogcServiceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full bg-[#087F8C] hover:bg-[#065F66] text-white py-2 rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 transition-colors shadow-xs"
+                    className="w-full bg-teal-700 hover:bg-teal-800 text-white py-2 rounded-lg font-bold text-xs flex items-center justify-center space-x-1.5 transition-colors shadow-xs"
                   >
                     <span>Open NESDR Live OGC Service</span>
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -380,7 +352,7 @@ export const NesdrDataCenterView: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200 p-6 text-center text-slate-400 text-xs">
               Select a dataset from the catalog to inspect metadata provenance.
             </div>
           )}
