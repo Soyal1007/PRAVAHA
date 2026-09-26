@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppStateProvider } from './context/AppStateContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { SimulationProvider } from './context/SimulationContext';
 import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/AuthContext';
+import { canAccess, ROLE_HOME, ViewId } from './auth/permissions';
+import { UserRole } from './types';
 
 import { Header } from './components/common/Header';
 import { Sidebar } from './components/common/Sidebar';
@@ -42,6 +45,7 @@ import { DriverDashboard } from './components/dashboards/DriverDashboard';
 import { AuthorityDashboard } from './components/dashboards/AuthorityDashboard';
 
 const MainApp: React.FC = () => {
+  const { currentUser } = useAuth();
   const [showSplash, setShowSplash] = useState<boolean>(true);
   const [showFirstTimePrompt, setShowFirstTimePrompt] = useState<boolean>(false);
   const [currentView, setCurrentView] = useState<string>('landingPage');
@@ -50,6 +54,22 @@ const MainApp: React.FC = () => {
   const [isAIChatOpen, setIsAIChatOpen] = useState<boolean>(false);
   const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
   const [isJudgeDemoOpen, setIsJudgeDemoOpen] = useState<boolean>(false);
+
+  // Permission guard — redirect to role home if user navigates to unauthorized view
+  const navigateTo = (view: string) => {
+    const role = currentUser?.role as UserRole | undefined;
+    const viewId = view as ViewId;
+    const publicViews: ViewId[] = ['landingPage', 'loginPortal', 'privacyPolicy', 'terms', 'helpSupport'];
+    if (publicViews.includes(viewId) || !role) {
+      setCurrentView(view);
+      return;
+    }
+    if (canAccess(role, viewId)) {
+      setCurrentView(view);
+    } else {
+      setCurrentView(ROLE_HOME[role] ?? 'landingPage');
+    }
+  };
 
   const [selectedEntity, setSelectedEntity] = useState<{
     type: 'vehicle' | 'shipment' | 'incident' | 'road' | 'warehouse';
@@ -287,10 +307,7 @@ const MainApp: React.FC = () => {
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenReportModal={() => setIsReportModalOpen(true)}
         onToggleAIChat={() => setIsAIChatOpen((prev) => !prev)}
-        onNavigateToView={setCurrentView}
-        onOpenTour={() => setIsTourOpen(true)}
-        onOpenDiagnostics={() => setCurrentView('meshDiagnostics')}
-        onOpenDemoModal={() => setIsJudgeDemoOpen(true)}
+        onNavigateToView={navigateTo}
         currentView={currentView}
       />
 
@@ -303,7 +320,7 @@ const MainApp: React.FC = () => {
         {!isLanding && (
           <Sidebar
             currentView={currentView}
-            onSelectView={setCurrentView}
+            onSelectView={navigateTo}
             onOpenAIChat={() => setIsAIChatOpen(true)}
           />
         )}
