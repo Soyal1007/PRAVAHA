@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { LeafletMapView } from './LeafletMapView';
 import { GoogleMapView } from './GoogleMapView';
 import { MapLayerState } from './MapLayerToggle';
-import { getGoogleMapsApiKey } from '../../config/maps';
+import { getGoogleMapsApiKey, hasUserProvidedApiKey } from '../../config/maps';
 import { REGIONAL_PRESETS, RegionalPreset } from '../../data/mapCoordinates';
-import { Compass } from 'lucide-react';
+import { Compass, CheckCircle2 } from 'lucide-react';
 
 interface InteractiveMapProps {
   layers: MapLayerState;
@@ -18,8 +18,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   height = '550px',
   onSelectEntity,
 }) => {
-  const apiKey = getGoogleMapsApiKey();
-  const [provider, setProvider] = useState<'google' | 'leaflet'>(apiKey ? 'google' : 'leaflet');
+  const hasUserKey = hasUserProvidedApiKey();
+  const [provider, setProvider] = useState<'google' | 'leaflet'>(hasUserKey ? 'google' : 'leaflet');
   const [selectedPreset, setSelectedPreset] = useState<RegionalPreset>(REGIONAL_PRESETS[0]);
 
   return (
@@ -30,6 +30,18 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
         <div className="bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-200 shadow-md flex items-center space-x-1 text-xs pointer-events-auto">
           <span className="text-[10px] font-bold text-slate-400 uppercase mr-1">Engine:</span>
           <button
+            onClick={() => setProvider('leaflet')}
+            className={`px-2.5 py-0.5 rounded-lg font-bold text-[11px] transition-all cursor-pointer flex items-center space-x-1 ${
+              provider === 'leaflet'
+                ? 'bg-slate-800 text-white shadow-2xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <span>Leaflet OSM</span>
+            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+          </button>
+
+          <button
             onClick={() => setProvider('google')}
             className={`px-2.5 py-0.5 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
               provider === 'google'
@@ -38,16 +50,6 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             }`}
           >
             Google Maps
-          </button>
-          <button
-            onClick={() => setProvider('leaflet')}
-            className={`px-2.5 py-0.5 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
-              provider === 'leaflet'
-                ? 'bg-slate-800 text-white shadow-2xs'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            Leaflet OSM
           </button>
         </div>
 
@@ -95,4 +97,3 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     </div>
   );
 };
-
