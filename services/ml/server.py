@@ -167,7 +167,49 @@ async def predict_disruption_risk(payload: RiskPredictionRequest):
 
 # ── Satellite Image Analysis Endpoints ──────────────────────────────
 
+TEST_IMAGES_DIR = Path(__file__).resolve().parent / "ai model" / "test_images"
+
+from fastapi.responses import FileResponse
+
+@app.get("/api/v1/presets/{preset_id}/image/{which}", tags=["Satellite Earth Intelligence"])
+@app.get("/api/v1/ml/presets/{preset_id}/image/{which}", tags=["Satellite Earth Intelligence"])
+async def get_preset_image(preset_id: str, which: str):
+    """Serve before/after preset satellite test images."""
+    if which not in ("before", "after"):
+        raise HTTPException(status_code=400, detail="Image type must be 'before' or 'after'")
+    
+    file_path = TEST_IMAGES_DIR / preset_id / f"{which}.jpg"
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"Preset image not found: {preset_id}/{which}")
+    
+    return FileResponse(file_path, media_type="image/jpeg")
+
+
+@app.post("/api/v1/analyze/preset/{preset_id}", tags=["Satellite Earth Intelligence"])
+@app.post("/api/v1/ml/analyze/preset/{preset_id}", tags=["Satellite Earth Intelligence"])
+async def analyze_preset(preset_id: str):
+    """Run real OpenCV change detection on a named preset test image pair."""
+    preset_dir = TEST_IMAGES_DIR / preset_id
+    before_path = preset_dir / "before.jpg"
+    after_path = preset_dir / "after.jpg"
+    
+    if not before_path.exists() or not after_path.exists():
+        raise HTTPException(status_code=404, detail=f"Preset images missing for '{preset_id}'")
+
+    if not inference_engine:
+        raise HTTPException(status_code=503, detail="Satellite Earth Intelligence engine unavailable.")
+
+    with open(before_path, "rb") as f:
+        before_bytes = f.read()
+    with open(after_path, "rb") as f:
+        after_bytes = f.read()
+
+    result = inference_engine.predict_change(before_bytes, after_bytes)
+    return result
+
+
 @app.post("/api/v1/ml/analyze/single", tags=["Satellite Earth Intelligence"])
+@app.post("/api/v1/analyze/single", tags=["Satellite Earth Intelligence"])
 async def analyze_single_image(file: UploadFile = File(...)):
     """Analyze a single satellite image for disaster classification and anomaly detection."""
     if not inference_engine:
@@ -190,6 +232,7 @@ async def analyze_single_image(file: UploadFile = File(...)):
 
 
 @app.post("/api/v1/ml/analyze/before-after", tags=["Satellite Earth Intelligence"])
+@app.post("/api/v1/analyze/before-after", tags=["Satellite Earth Intelligence"])
 async def analyze_before_after(
     before: UploadFile = File(...),
     after: UploadFile = File(...),
@@ -213,3 +256,4 @@ async def analyze_before_after(
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
+

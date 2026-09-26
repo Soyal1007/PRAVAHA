@@ -16,7 +16,9 @@ export type NesdrDomain =
   | 'Infrastructure' 
   | 'Water Resource' 
   | 'Land Resource' 
-  | 'Administrative Boundaries';
+  | 'Administrative Boundaries'
+  | 'Remote Sensing'
+  | 'Meteorology';
 
 export interface NesdrDataset {
   id: string;
@@ -27,7 +29,7 @@ export interface NesdrDataset {
   sourceUrl: string;
   ogcServiceUrl: string;
   layerName: string;
-  dataFormat: 'WMS' | 'Shapefile' | 'GeoJSON' | 'GeoTIFF' | 'CSV';
+  dataFormat: string;
   lastUpdated: string;
   coverage: string;
   description: string;
