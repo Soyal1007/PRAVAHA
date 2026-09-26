@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Activity, Users, FileText, Bell, AlertTriangle, ArrowUpRight, CheckCircle2, Server, Database, BarChart3, PieChart as PieIcon } from 'lucide-react';
+import { ShieldCheck, Activity, AlertTriangle, ArrowUpRight, CheckCircle2, Server, BarChart3, PieChart as PieIcon, MapPin, Clock } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { InteractiveMap } from '../map/InteractiveMap';
@@ -35,101 +35,75 @@ export const AdminDashboard: React.FC<DashboardProps> = ({ onNavigateToView, onS
   ];
 
   return (
-    <div className="space-y-6 font-body">
-      {/* Role Banner - Spacious & Premium */}
-      <div className="bg-gradient-to-r from-[#087F8C] to-slate-900 text-white p-6 sm:p-8 rounded-3xl shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center space-x-4">
-          <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/20 shrink-0">
-            <ShieldCheck className="w-8 h-8 text-teal-200" />
+    <div className="space-y-5 font-body">
+      {/* Compact Operational Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+        <div>
+          <div className="flex items-center space-x-2 mb-1">
+            <MapPin className="w-4 h-4 text-teal-700" />
+            <span className="text-xs font-bold text-teal-700 uppercase tracking-wider">Northeast Region · India</span>
           </div>
-          <div>
-            <div className="flex items-center space-x-3">
-              <h2 className="font-display font-black text-2xl tracking-tight text-white">
-                {t('adminBannerTitle')}
-              </h2>
-              <span className="bg-teal-400/20 text-teal-200 text-xs font-mono font-bold px-3 py-1 rounded-full uppercase border border-teal-400/30">
-                {t('fullPrivileges')}
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-teal-100/90 mt-1 max-w-2xl">
-              {t('adminBannerSub')}
-            </p>
-          </div>
+          <h1 className="text-xl font-black text-slate-900 tracking-tight">Command Center</h1>
+          <p className="text-xs text-slate-500 mt-0.5 flex items-center space-x-1.5">
+            <Clock className="w-3.5 h-3.5" />
+            <span>{new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} · {new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} IST</span>
+          </p>
         </div>
 
-        <div className="flex items-center space-x-3 shrink-0">
+        <div className="flex items-center space-x-2">
           <button
             onClick={() => onNavigateToView('analytics')}
-            className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2"
+            className="bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center space-x-1.5"
           >
-            <BarChart3 className="w-4 h-4 text-teal-300" />
-            <span>{t('fullAnalyticsHub')}</span>
+            <BarChart3 className="w-3.5 h-3.5 text-slate-400" />
+            <span>Analytics</span>
           </button>
-
           <button
             onClick={() => onNavigateToView('reports')}
-            className="bg-white text-[#087F8C] hover:bg-teal-50 px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all shadow-md cursor-pointer"
+            className="bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors cursor-pointer"
           >
-            {t('exportExecutiveAudit')}
+            Export Report
           </button>
         </div>
       </div>
 
-      {/* KPI Cards - De-cluttered & Airy */}
-      <div data-tour="command-kpis" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            {t('totalActiveFleet')}
+      {/* KPI Strip */}
+      <div data-tour="command-kpis" className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-1">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Fleet</div>
+          <div className="text-2xl font-black text-slate-900">{vehicles.length}</div>
+          <div className="text-[11px] text-slate-500">
+            {vehicles.filter(v => v.gpsStatus === 'Online').length} GPS online ·{' '}
+            {vehicles.filter(v => v.gpsStatus === 'Offline').length} offline
           </div>
-          <div className="flex items-baseline space-x-2">
-            <span className="text-3xl font-black text-slate-900 font-display">
-              {vehicles.length} {t('trucks')}
-            </span>
-            <span className="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">
-              100% Online
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 font-medium pt-1">Active GPS telemetry stream</p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            {t('activeRoadBlockages')}
+        <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-1">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Road Blockages</div>
+          <div className={`text-2xl font-black ${activeBlockages.length > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+            {activeBlockages.length}
           </div>
-          <div className="flex items-baseline space-x-2">
-            <span className="text-3xl font-black text-red-600 font-display">
-              {activeBlockages.length} {t('corridors')}
-            </span>
-            <span className="text-xs text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded-md">
-              {t('actionRequired')}
-            </span>
+          <div className="text-[11px] text-slate-500">
+            {activeBlockages.length > 0 ? activeBlockages.map(r => r.roadName.split(' ')[0]).join(', ') : 'All corridors open'}
           </div>
-          <p className="text-xs text-slate-500 font-medium pt-1">NH-10 & NH-2 Landslide Passes</p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            {t('criticalEmergencyAlerts')}
+        <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-1">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unacknowledged Alerts</div>
+          <div className={`text-2xl font-black ${criticalAlerts.filter(a => !a.acknowledged).length > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
+            {criticalAlerts.filter(a => !a.acknowledged).length}
           </div>
-          <div className="flex items-baseline space-x-2">
-            <span className="text-3xl font-black text-amber-600 font-display">
-              {criticalAlerts.length} Active
-            </span>
+          <div className="text-[11px] text-slate-500">
+            {criticalAlerts.length} critical total
           </div>
-          <p className="text-xs text-slate-500 font-medium pt-1">AlertNet real-time dispatch</p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-2">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            {t('systemUptime')}
+        <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-1">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pending Verification</div>
+          <div className="text-2xl font-black text-slate-900">
+            {incidents.filter(i => i.verificationStatus === 'Unverified (Pending Inspection)').length}
           </div>
-          <div className="flex items-baseline space-x-2">
-            <span className="text-3xl font-black text-emerald-600 font-display">99.98%</span>
-            <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">
-              Nominal
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 font-medium pt-1">Guwahati Master Node</p>
+          <div className="text-[11px] text-slate-500">field reports awaiting review</div>
         </div>
       </div>
 
