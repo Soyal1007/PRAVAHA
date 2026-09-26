@@ -1,0 +1,146 @@
+# NER-SHIELD Training Configuration
+
+training:
+  # General
+  epochs: 100
+  batch_size: 16
+  accumulation_steps: 4
+  num_workers: 4
+  pin_memory: true
+  seed: 42
+
+  # Optimizer
+  optimizer:
+    type: "adamw"
+    lr: 1.0e-4
+    weight_decay: 1.0e-4
+    betas: [0.9, 0.999]
+    eps: 1.0e-8
+
+  # Learning rate scheduler
+  scheduler:
+    type: "cosine_annealing_warm_restarts"
+    T_0: 10
+    T_mult: 2
+    eta_min: 1.0e-6
+
+  # Warmup
+  warmup:
+    enabled: true
+    epochs: 5
+    start_lr: 1.0e-6
+    end_lr: 1.0e-4
+
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 15
+    metric: "val_f1_weighted"
+    mode: "max"
+    min_delta: 0.001
+
+  # Mixed precision
+  mixed_precision:
+    enabled: true
+    dtype: "float16"
+
+  # Gradient clipping
+  gradient_clipping:
+    enabled: true
+    max_norm: 1.0
+
+  # Checkpointing
+  checkpoint:
+    save_best: true
+    save_last: true
+    save_every_n_epochs: 10
+    metric: "val_f1_weighted"
+    mode: "max"
+    dir: "checkpoints"
+
+  # Logging
+  logging:
+    tensorboard: true
+    log_dir: "logs"
+    log_every_n_steps: 10
+    log_images_every_n_epochs: 5
+
+# Data split
+data:
+  train_ratio: 0.7
+  val_ratio: 0.15
+  test_ratio: 0.15
+  stratified: true
+
+# Augmentations
+augmentations:
+  train:
+    horizontal_flip:
+      p: 0.5
+    vertical_flip:
+      p: 0.5
+    random_rotate_90:
+      p: 0.5
+    shift_scale_rotate:
+      shift_limit: 0.1
+      scale_limit: 0.15
+      rotate_limit: 45
+      p: 0.5
+    random_brightness_contrast:
+      brightness_limit: 0.2
+      contrast_limit: 0.2
+      p: 0.3
+    hue_saturation:
+      hue_shift_limit: 10
+      sat_shift_limit: 20
+      val_shift_limit: 15
+      p: 0.3
+    gaussian_noise:
+      var_limit: [10.0, 50.0]
+      p: 0.2
+    gaussian_blur:
+      blur_limit: [3, 5]
+      p: 0.2
+    coarse_dropout:
+      max_holes: 8
+      max_height: 32
+      max_width: 32
+      fill_value: 0
+      p: 0.2
+    elastic_transform:
+      alpha: 120
+      sigma: 6
+      p: 0.1
+  val:
+    # Only normalization — no augmentation for validation
+    normalize: true
+  test:
+    normalize: true
+
+# Task-specific training settings
+task_configs:
+  classification:
+    loss: "focal"
+    focal_gamma: 2.0
+    label_smoothing: 0.05
+    mixup_alpha: 0.2
+    cutmix_alpha: 1.0
+    mixup_prob: 0.3
+
+  segmentation:
+    loss: "dice_focal"
+    dice_weight: 0.5
+    focal_weight: 0.5
+    ignore_index: 255
+    aux_loss_weight: 0.4
+
+  change_detection:
+    loss: "bce_dice"
+    bce_weight: 0.5
+    dice_weight: 0.5
+
+  anomaly_detection:
+    loss: "mse_kl"
+    kl_weight: 0.0005
+    epochs: 150  # anomaly detector trains longer
+    batch_size: 32  # can use larger batch for smaller input

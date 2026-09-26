@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   PhoneCall,
   Database,
+  Cpu,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -106,6 +107,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onSelectView, onO
     {
       group: 'Intelligence & Risk',
       items: [
+        { id: 'mlStudio', label: 'AI Disruption Model Studio', icon: Cpu, iconColor: 'text-indigo-600', badge: 'v1.0 ML', badgeColor: 'bg-indigo-100 text-indigo-900 font-bold' },
         { id: 'analytics', label: t('analytics'), icon: BarChart3, iconColor: 'text-purple-600', badge: 'Charts' },
         { id: 'nesdrDataCenter', label: t('nesdrDataCenter'), icon: Database, iconColor: 'text-[#087F8C]', badge: 'ISRO/NESAC', badgeColor: 'bg-teal-100 text-teal-800 font-bold' },
         { id: 'weatherCore', label: t('weatherCore'), icon: CloudRain, iconColor: 'text-sky-600', badge: null },

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, ShieldAlert, BarChart, Info, Database } from 'lucide-react';
+import { Activity, ShieldAlert, BarChart, Info, Database, Cpu } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { InteractiveRadarChart } from '../common/charts/InteractiveRadarChart';
@@ -52,9 +52,15 @@ export const RiskEngineView: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 bg-teal-50 border border-teal-200 px-3.5 py-2 rounded-2xl text-xs text-teal-900 font-extrabold shrink-0">
-          <Database className="w-4 h-4 text-[#087F8C]" />
-          <span>NESDR / NESAC GIS Baseline Enabled (20% Weight)</span>
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <div className="flex items-center space-x-2 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-2xl text-xs text-indigo-900 font-extrabold">
+            <Cpu className="w-4 h-4 text-indigo-600" />
+            <span>PravahaDisruptionRiskModel v1.0 (20% Weight)</span>
+          </div>
+          <div className="flex items-center space-x-2 bg-teal-50 border border-teal-200 px-3.5 py-2 rounded-2xl text-xs text-teal-900 font-extrabold">
+            <Database className="w-4 h-4 text-[#087F8C]" />
+            <span>NESDR GIS Baseline (15% Weight)</span>
+          </div>
         </div>
       </div>
 

@@ -1,0 +1,109 @@
+# NER-SHIELD Inference Configuration
+
+inference:
+  # Device
+  device: "auto"  # auto, cuda, cpu
+  half_precision: true
+
+  # Batch processing
+  batch_size: 8
+  num_workers: 2
+
+  # Model paths
+  model_paths:
+    classification: "checkpoints/classification_best.pth"
+    segmentation: "checkpoints/segmentation_best.pth"
+    change_detection: "checkpoints/change_detection_best.pth"
+    anomaly_detector: "checkpoints/anomaly_detector_best.pth"
+
+  # ONNX export
+  onnx:
+    enabled: true
+    opset_version: 17
+    dynamic_axes: true
+    export_dir: "exports/onnx"
+    optimize: true
+
+  # Thresholds
+  thresholds:
+    classification_confidence: 0.5
+    segmentation_min_area_pixels: 100
+    change_detection_threshold: 0.5
+    anomaly_score_threshold: 65.0
+
+  # Heatmap generation
+  heatmap:
+    method: "gradcam"
+    target_layers: "auto"  # auto-detect last conv layer
+    colormap: "jet"
+    alpha: 0.4
+
+  # Report generation
+  report:
+    format: "json"  # json, pdf
+    include_heatmap: true
+    include_segmentation_overlay: true
+    include_recommendations: true
+    severity_assessment: true
+
+  # Geo settings
+  geo:
+    default_gsd_meters: 10.0
+    output_crs: "EPSG:4326"
+
+# Severity thresholds for reporting
+severity_mapping:
+  classification:
+    landslide:
+      low: 0.5
+      moderate: 0.7
+      high: 0.85
+      critical: 0.95
+    flood:
+      low: 0.5
+      moderate: 0.7
+      high: 0.85
+      critical: 0.95
+    road_damage:
+      low: 0.5
+      moderate: 0.7
+      high: 0.85
+      critical: 0.95
+    infrastructure_damage:
+      low: 0.5
+      moderate: 0.7
+      high: 0.85
+      critical: 0.95
+    vegetation_loss:
+      low: 0.5
+      moderate: 0.65
+      high: 0.8
+      critical: 0.9
+
+# Recommendation templates
+recommendations:
+  landslide:
+    - "Deploy geotechnical survey team to assess slope stability"
+    - "Establish exclusion zone around identified landslide area"
+    - "Coordinate with NDMA for immediate response"
+    - "Monitor upstream areas for secondary slide risk"
+  flood:
+    - "Activate flood warning systems for downstream settlements"
+    - "Deploy water rescue teams to affected zones"
+    - "Assess road accessibility for evacuation routes"
+    - "Monitor water levels for recession forecast"
+  road_damage:
+    - "Issue traffic advisory for affected road sections"
+    - "Deploy road repair and debris clearing teams"
+    - "Identify alternative routes for essential traffic"
+    - "Assess structural integrity of bridges in vicinity"
+  infrastructure_damage:
+    - "Conduct structural integrity assessment"
+    - "Evacuate buildings showing severe damage indicators"
+    - "Deploy utility restoration teams"
+    - "Assess collateral damage to nearby infrastructure"
+  vegetation_loss:
+    - "Assess erosion risk in deforested areas"
+    - "Monitor for secondary landslide risk due to vegetation loss"
+    - "Plan reforestation for slope stabilization"
+    - "Evaluate downstream sedimentation impact"

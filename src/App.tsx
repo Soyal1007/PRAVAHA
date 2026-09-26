@@ -25,6 +25,7 @@ import { FleetPulseView } from './components/views/FleetPulseView';
 import { SupplyGridView } from './components/views/SupplyGridView';
 import { WeatherCoreView } from './components/views/WeatherCoreView';
 import { RiskEngineView } from './components/views/RiskEngineView';
+import { MLStudioView } from './components/views/MLStudioView';
 import { FieldLinkView } from './components/views/FieldLinkView';
 import { MeshDiagnosticsView } from './components/views/MeshDiagnosticsView';
 import { JudgeDemoModal } from './components/common/JudgeDemoModal';
@@ -165,6 +166,13 @@ const MainApp: React.FC = () => {
         return (
           <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
             <RiskEngineView />
+          </div>
+        );
+
+      case 'mlStudio':
+        return (
+          <div className="p-3 sm:p-6 max-w-[1650px] mx-auto view-enter-animation">
+            <MLStudioView />
           </div>
         );
 

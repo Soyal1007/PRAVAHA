@@ -1,0 +1,433 @@
+# =============================================================================
+# NER-SHIELD / PRAVAHA Dataset Card
+# AI-Based Smart Logistics and Accessibility Intelligence Platform
+# Problem Statement: SIH26002 — MDoNER
+# =============================================================================
+
+dataset_card:
+  version: "1.0.0"
+  created_date: "2026-09-25"
+  last_updated: "2026-09-25"
+
+# -----------------------------------------------------------------------------
+# Project Information
+# -----------------------------------------------------------------------------
+project:
+  name: "NER-SHIELD / PRAVAHA"
+  full_name: "AI-Based Smart Logistics and Accessibility Intelligence Platform for Northeast Region"
+  problem_statement_id: "SIH26002"
+  ministry: "Ministry of Development of North Eastern Region (MDoNER)"
+  competition: "Smart India Hackathon 2026"
+
+# -----------------------------------------------------------------------------
+# Dataset Overview
+# -----------------------------------------------------------------------------
+overview:
+  description: >
+    Multi-source satellite imagery and geospatial dataset for disaster detection,
+    infrastructure monitoring, and terrain analysis in Northeast India. Covers
+    landslides, floods, road damage, infrastructure damage, and terrain change
+    detection using optical, SAR, and DEM data from Indian and international sources.
+  domain: "Remote Sensing / Disaster Management / Geospatial AI"
+  task_types:
+    - "image_classification"
+    - "semantic_segmentation"
+    - "change_detection"
+    - "object_detection"
+    - "temporal_analysis"
+  primary_use_case: "Automated disaster detection and infrastructure monitoring in NER"
+
+# -----------------------------------------------------------------------------
+# Geographic Coverage
+# -----------------------------------------------------------------------------
+coverage:
+  region: "Northeast India (NER)"
+  states:
+    - name: "Assam"
+      abbreviation: "AS"
+    - name: "Meghalaya"
+      abbreviation: "ML"
+    - name: "Manipur"
+      abbreviation: "MN"
+    - name: "Mizoram"
+      abbreviation: "MZ"
+    - name: "Nagaland"
+      abbreviation: "NL"
+    - name: "Tripura"
+      abbreviation: "TR"
+    - name: "Arunachal Pradesh"
+      abbreviation: "AR"
+    - name: "Sikkim"
+      abbreviation: "SK"
+  bounding_box:
+    north: 29.0
+    south: 21.0
+    east: 98.0
+    west: 88.0
+    crs: "EPSG:4326"
+  area_sq_km: ~262230
+  terrain_types:
+    - "Mountains (Himalayan foothills)"
+    - "River valleys (Brahmaputra, Barak)"
+    - "Plateaus (Meghalaya, Karbi Anglong)"
+    - "Floodplains"
+    - "Dense tropical forests"
+
+# -----------------------------------------------------------------------------
+# Temporal Coverage
+# -----------------------------------------------------------------------------
+temporal:
+  primary_range: "2020-01-01 to 2026-09-25"
+  static_datasets:
+    - dataset: "SRTM DEM"
+      date: "2000-02-11"
+    - dataset: "Copernicus DEM GLO-30"
+      date: "2021 (latest release)"
+  known_disaster_events: 18
+  disaster_event_range: "2020-2026"
+
+# -----------------------------------------------------------------------------
+# Data Sources Summary
+# -----------------------------------------------------------------------------
+sources:
+  total_sources: 6
+  total_datasets: 44
+  breakdown:
+    - source: "ISRO Bhuvan"
+      num_datasets: 9
+      data_types: ["multispectral_imagery", "SAR", "DEM", "vector_labels", "thematic_maps"]
+      license: "ISRO Open Data Policy"
+    - source: "IMD"
+      num_datasets: 4
+      data_types: ["weather_timeseries", "gridded_weather", "event_catalog"]
+      license: "IMD Open Data Policy"
+    - source: "Kaggle"
+      num_datasets: 14
+      data_types: ["labeled_imagery", "event_catalog"]
+      licenses: ["CC0", "CC BY 4.0", "CC BY-SA 4.0", "CC BY-NC-SA 4.0", "MIT", "CDLA-Permissive-1.0", "Research use"]
+    - source: "GitHub"
+      num_datasets: 11
+      data_types: ["labeled_imagery", "change_detection", "framework", "utilities"]
+      licenses: ["MIT", "Apache 2.0", "CC BY-NC-SA 4.0", "Research use"]
+    - source: "Copernicus CDSE"
+      num_datasets: 6
+      data_types: ["multispectral_imagery", "SAR", "DEM", "emergency_maps"]
+      license: "Copernicus Open Access"
+    - source: "USGS/NASA"
+      num_datasets: 3
+      data_types: ["multispectral_imagery", "DEM"]
+      license: "Public Domain"
+
+# -----------------------------------------------------------------------------
+# Class Labels
+# -----------------------------------------------------------------------------
+classification:
+  num_classes: 6
+  labels:
+    0:
+      name: "normal"
+      description: "No disaster or damage detected; normal terrain and infrastructure"
+    1:
+      name: "landslide"
+      description: "Landslide scar, debris flow, slope failure, or mass wasting"
+    2:
+      name: "flood"
+      description: "Flood inundation, waterlogging, river overflow"
+    3:
+      name: "road_damage"
+      description: "Road surface damage, washout, blockage, or structural failure"
+    4:
+      name: "infrastructure_damage"
+      description: "Building collapse, bridge damage, or other structural damage"
+    5:
+      name: "terrain_change"
+      description: "Significant terrain deformation, erosion, or land use change"
+
+# -----------------------------------------------------------------------------
+# Processing Pipeline
+# -----------------------------------------------------------------------------
+processing:
+  pipeline_stages:
+    1:
+      name: "Format Detection"
+      description: "Identify input format (GeoTIFF, JP2, PNG, JPEG, HGT, SAFE)"
+    2:
+      name: "CRS Normalization"
+      description: "Reproject all data to EPSG:4326 (WGS84)"
+    3:
+      name: "Resolution Normalization"
+      description: "Resize to standard dimensions (256x256 or 512x512 pixels)"
+    4:
+      name: "Band Selection"
+      description: "Extract and align target bands (Red, Green, Blue, NIR, SWIR1)"
+    5:
+      name: "Radiometric Correction"
+      description: "Dark Object Subtraction (DOS) atmospheric correction"
+    6:
+      name: "Cloud Masking"
+      description: "Discard images with >20% cloud cover"
+    7:
+      name: "Labeling"
+      description: "Assign class labels (0-5) based on source annotations and spatial overlap"
+    8:
+      name: "Quality Validation"
+      description: "Check for corrupt, all-black, all-white, zero-variance images"
+
+  target_specifications:
+    crs: "EPSG:4326"
+    resolutions:
+      - "256x256"
+      - "512x512"
+    bands:
+      - "red"
+      - "green"
+      - "blue"
+      - "nir"
+      - "swir1"
+    file_format: "GeoTIFF"
+    cloud_threshold: 0.20
+    radiometric_method: "dark_object_subtraction"
+
+# -----------------------------------------------------------------------------
+# Data Augmentation
+# -----------------------------------------------------------------------------
+augmentation:
+  library: "albumentations (with numpy/OpenCV fallback)"
+  standard_transforms:
+    - name: "HorizontalFlip"
+      probability: 0.5
+    - name: "VerticalFlip"
+      probability: 0.5
+    - name: "RandomRotate90"
+      probability: 0.5
+    - name: "RandomBrightnessContrast"
+      probability: 0.3
+      brightness_limit: 0.15
+      contrast_limit: 0.15
+    - name: "GaussNoise"
+      probability: 0.2
+      var_limit: [10.0, 50.0]
+    - name: "RandomCrop + Resize"
+      probability: 0.3
+      min_crop_ratio: 0.7
+    - name: "ColorJitter"
+      probability: 0.2
+    - name: "ElasticTransform"
+      probability: 0.1
+  custom_transforms:
+    - name: "Mixup"
+      alpha: 1.0
+      description: "Beta-distributed linear interpolation between two images"
+    - name: "CutMix"
+      alpha: 1.0
+      description: "Regional replacement between two images with mixed labels"
+
+# -----------------------------------------------------------------------------
+# Before/After Temporal Pairs
+# -----------------------------------------------------------------------------
+temporal_pairs:
+  description: "Before and after image pairs for change detection around disaster events"
+  num_known_events: 18
+  event_types:
+    - "landslide"
+    - "flood"
+    - "infrastructure_damage"
+    - "terrain_change"
+  pair_generation:
+    pre_event_window_days: 30
+    post_event_window_days: 14
+    satellite_source: "Sentinel-2 L2A"
+    max_cloud_cover: 0.20
+  synthetic_pair_methods:
+    - "simulate_landslide_scar"
+    - "simulate_flood_inundation"
+    - "simulate_road_damage"
+  known_events:
+    - id: "NER_2020_FLOOD_ASSAM_01"
+      type: "flood"
+      date: "2020-07-15"
+      region: "Assam"
+    - id: "NER_2020_LANDSLIDE_IDUKKI_01"
+      type: "landslide"
+      date: "2020-08-07"
+      region: "Meghalaya"
+    - id: "NER_2021_FLOOD_ASSAM_01"
+      type: "flood"
+      date: "2021-05-28"
+      region: "Assam"
+    - id: "NER_2021_LANDSLIDE_MIZORAM_01"
+      type: "landslide"
+      date: "2021-06-12"
+      region: "Mizoram"
+    - id: "NER_2021_FLOOD_ASSAM_02"
+      type: "flood"
+      date: "2021-07-14"
+      region: "Assam"
+    - id: "NER_2022_FLOOD_ASSAM_01"
+      type: "flood"
+      date: "2022-06-17"
+      region: "Assam"
+    - id: "NER_2022_LANDSLIDE_MANIPUR_01"
+      type: "landslide"
+      date: "2022-06-30"
+      region: "Manipur"
+    - id: "NER_2022_FLOOD_MEGHALAYA_01"
+      type: "flood"
+      date: "2022-06-18"
+      region: "Meghalaya"
+    - id: "NER_2022_LANDSLIDE_ARUNACHAL_01"
+      type: "landslide"
+      date: "2022-07-11"
+      region: "Arunachal Pradesh"
+    - id: "NER_2022_INFRA_SIKKIM_01"
+      type: "infrastructure_damage"
+      date: "2022-08-05"
+      region: "Sikkim"
+    - id: "NER_2023_FLOOD_ASSAM_01"
+      type: "flood"
+      date: "2023-06-20"
+      region: "Assam"
+    - id: "NER_2023_LANDSLIDE_MIZORAM_02"
+      type: "landslide"
+      date: "2023-07-04"
+      region: "Mizoram"
+    - id: "NER_2023_FLOOD_NAGALAND_01"
+      type: "flood"
+      date: "2023-08-01"
+      region: "Nagaland"
+    - id: "NER_2024_FLOOD_ASSAM_01"
+      type: "flood"
+      date: "2024-06-10"
+      region: "Assam"
+    - id: "NER_2024_LANDSLIDE_MEGHALAYA_01"
+      type: "landslide"
+      date: "2024-07-22"
+      region: "Meghalaya"
+    - id: "NER_2024_TERRAIN_SIKKIM_01"
+      type: "terrain_change"
+      date: "2024-08-15"
+      region: "Sikkim"
+    - id: "NER_2025_FLOOD_TRIPURA_01"
+      type: "flood"
+      date: "2025-06-25"
+      region: "Tripura"
+    - id: "NER_2025_LANDSLIDE_NAGALAND_01"
+      type: "landslide"
+      date: "2025-09-03"
+      region: "Nagaland"
+
+# -----------------------------------------------------------------------------
+# Dataset Split
+# -----------------------------------------------------------------------------
+split:
+  strategy: "stratified with geographic-aware grouping"
+  ratios:
+    train: 0.70
+    val: 0.15
+    test: 0.15
+  constraints:
+    - "Stratified by class label"
+    - "Geographic groups (~10km grid cells) kept in same split"
+    - "Before/after pairs kept in same split (pair cohesion)"
+    - "No geographic overlap between train/val/test (leakage prevention)"
+  output_format:
+    structure: "train/val/test directories with class subdirectories"
+    statistics_file: "split_statistics.json"
+
+# -----------------------------------------------------------------------------
+# Quality Validation
+# -----------------------------------------------------------------------------
+validation:
+  checks:
+    - name: "file_exists"
+      description: "Verify file exists on disk"
+    - name: "file_readable"
+      description: "Verify file can be opened and decoded"
+    - name: "min_dimensions"
+      description: "Minimum 32x32 pixels"
+      threshold: 32
+    - name: "aspect_ratio"
+      description: "Aspect ratio between 0.25 and 4.0"
+      min_ratio: 0.25
+      max_ratio: 4.0
+    - name: "all_black"
+      description: "Detect all-black/zero-value images"
+    - name: "all_white"
+      description: "Detect all-white/saturated images"
+    - name: "zero_variance"
+      description: "Detect constant-value images"
+    - name: "missing_georef"
+      description: "Check for missing georeference (CRS/transform)"
+    - name: "nan_inf"
+      description: "Detect NaN or Inf values in raster bands"
+  thresholds:
+    minimum_validity_rate: 0.90
+    class_imbalance_warning_ratio: 10.0
+
+# -----------------------------------------------------------------------------
+# Scripts
+# -----------------------------------------------------------------------------
+scripts:
+  download:
+    - path: "scripts/download_isro.py"
+      description: "Download ISRO Bhuvan data via WCS/WFS/WMS/ODA"
+      requires: ["requests"]
+    - path: "scripts/download_imd.py"
+      description: "Download IMD weather data (station, gridded, extreme events)"
+      requires: ["requests", "numpy"]
+    - path: "scripts/download_kaggle.py"
+      description: "Download Kaggle datasets via kaggle CLI API"
+      requires: ["kaggle"]
+    - path: "scripts/download_github.py"
+      description: "Clone GitHub repos with dataset extraction"
+      requires: ["git"]
+    - path: "scripts/download_sentinel.py"
+      description: "Download Sentinel/Copernicus data via CDSE OData API"
+      requires: ["requests", "sentinelsat (optional)"]
+    - path: "scripts/download_landsat.py"
+      description: "Download Landsat/SRTM via USGS M2M API"
+      requires: ["requests", "landsatxplore (optional)"]
+  processing:
+    - path: "scripts/preprocess_pipeline.py"
+      description: "8-stage preprocessing pipeline (format, CRS, resolution, bands, radiometric, cloud, label, validate)"
+      requires: ["rasterio", "numpy", "opencv-python", "Pillow"]
+    - path: "scripts/augmentation.py"
+      description: "Data augmentation with albumentations and custom Mixup/CutMix"
+      requires: ["albumentations", "numpy", "opencv-python"]
+    - path: "scripts/create_before_after_pairs.py"
+      description: "Generate before/after temporal pairs for 18 NER disaster events"
+      requires: ["requests", "rasterio", "numpy"]
+    - path: "scripts/split_dataset.py"
+      description: "Stratified geographic-aware train/val/test split"
+      requires: ["numpy", "rasterio (optional)"]
+    - path: "scripts/validate_dataset.py"
+      description: "Comprehensive dataset quality validation (9 checks)"
+      requires: ["numpy", "Pillow", "rasterio (optional)"]
+
+# -----------------------------------------------------------------------------
+# Known Limitations
+# -----------------------------------------------------------------------------
+limitations:
+  - "Cloud cover is prevalent in NER during monsoon (June-September), limiting optical imagery availability"
+  - "SAR data from RISAT-1 has limited historical archive compared to Sentinel-1"
+  - "Some Kaggle datasets (xBD, CrisisMMD) are non-commercial use only"
+  - "RESISC-45 and PatternNet are restricted to research use"
+  - "ISRO Bhuvan data availability varies by sensor and time period"
+  - "IMD station density is sparse in Arunachal Pradesh and Nagaland"
+  - "Before/after pairs depend on cloud-free Sentinel-2 availability near event dates"
+  - "Synthetic pairs approximate but do not perfectly replicate real disaster signatures"
+  - "Class distribution may be imbalanced — normal class likely dominates"
+  - "Geographic coverage of labeled data is uneven across the 8 NER states"
+
+# -----------------------------------------------------------------------------
+# Ethical Considerations
+# -----------------------------------------------------------------------------
+ethics:
+  intended_use: "Government disaster response, infrastructure monitoring, and logistics planning for NER"
+  prohibited_use: "Surveillance of individuals, military targeting, or commercial exploitation without appropriate licenses"
+  privacy: "No personally identifiable information in satellite imagery at used resolutions"
+  bias_considerations:
+    - "Urban areas may be over-represented in training data relative to remote NER regions"
+    - "Disaster events in accessible areas are better documented than those in remote locations"
+    - "International datasets may not fully represent NER terrain and vegetation characteristics"
+  data_sovereignty: "Indian satellite data (ISRO) processed within Indian jurisdiction for Indian government use"

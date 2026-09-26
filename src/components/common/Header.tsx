@@ -58,6 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const QUICK_SECTIONS = [
     { id: 'landingPage', label: 'Main Overview', icon: LayoutDashboard },
+    { id: 'mlStudio', label: 'AI Disruption Model Studio', icon: Sparkles },
     { id: 'meshDiagnostics', label: 'BLE Mesh Control Panel', icon: Radio },
     { id: 'fieldLink', label: 'FieldLink Mesh Dispatcher', icon: Radio },
     { id: 'commandCenter', label: 'Command Center', icon: LayoutDashboard },
