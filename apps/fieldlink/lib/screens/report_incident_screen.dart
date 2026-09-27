@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/field_report.dart';
 import '../services/offline_storage.dart';
 import '../services/ble_mesh_service.dart';
+import '../services/sync_engine.dart';
 
 class ReportIncidentScreen extends StatefulWidget {
   final BleMeshService bleService;
@@ -110,6 +111,9 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
 
     await OfflineStorage.instance.insertReport(report);
     await widget.bleService.broadcastIncidentReport(report);
+
+    // Trigger immediate cloud push sync if online
+    SyncEngine().syncOutbox().catchError((_) => 0);
 
     if (!mounted) return;
 

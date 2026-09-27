@@ -255,7 +255,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Sync offline storage & BLE Mesh Queue event listeners
+  // Real-time FieldLink Sync Engine: Cross-tab, BroadcastChannel & Backend API Polling
   useEffect(() => {
     const updatePendingCount = () => {
       const pendingStorage = offlineStorage.getPendingReports().length + offlineStorage.getPendingGps().length;
@@ -285,11 +285,110 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       syncOfflineQueue();
     });
 
+    // 1. Cross-Tab & Web BroadcastChannel Listener for Live FieldLink Reports
+    let bc: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      bc = new BroadcastChannel('pravaha_fieldlink_live');
+      bc.onmessage = (event) => {
+        if (event.data && event.data.type === 'FIELD_REPORT_SUBMITTED' && event.data.report) {
+          const report = event.data.report;
+          setIncidents(prev => {
+            if (prev.some(i => i.id === report.id)) return prev;
+            return [report, ...prev];
+          });
+          addNotification('Live FieldLink Report Received', `New ${report.incidentType} on ${report.roadName} reported live by ${report.reporterName}.`, 'Critical');
+          addSystemLog(`Live FieldLink Broadcast Received: ${report.incidentType} on ${report.roadName}`);
+          if (report.severity === 'Critical' || report.severity === 'High') {
+            blockRoadSegment(report.roadName, report.description);
+          }
+        }
+      };
+    }
+
+    // 2. Storage event listener for cross-tab localStorage updates
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'pravaha_latest_field_report' && e.newValue) {
+        try {
+          const report = JSON.parse(e.newValue);
+          setIncidents(prev => {
+            if (prev.some(i => i.id === report.id)) return prev;
+            return [report, ...prev];
+          });
+        } catch (_) {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    // 3. Backend API Polling Loop (fetches live incident reports from FastAPI backend every 3s)
+    const fetchBackendIncidents = async () => {
+      const targets = ['http://localhost:8000/api/v1/incidents', 'https://pravaha-api.vercel.app/api/v1/incidents'];
+      for (const target of targets) {
+        try {
+          const res = await fetch(target, { signal: AbortSignal.timeout(2500) });
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            let hasNew = false;
+            setIncidents(prev => {
+              const existingIds = new Set(prev.map(i => i.id));
+              const newItems: Incident[] = [];
+
+              for (const item of data) {
+                const incId = item.id || `inc-api-${item.lat}-${item.lng}`;
+                if (!existingIds.has(incId)) {
+                  hasNew = true;
+                  const newInc: Incident = {
+                    id: incId,
+                    incidentType: item.incident_type || 'Landslide',
+                    location: {
+                      lat: item.lat || 27.14,
+                      lng: item.lng || 88.42,
+                      name: item.road_name || 'NER Corridor',
+                    },
+                    state: 'Assam / Sikkim / Northeast',
+                    district: 'Field Command District',
+                    roadName: item.road_name || 'NH Corridor',
+                    severity: item.severity === 'CRITICAL' ? 'Critical' : item.severity === 'HIGH' ? 'High' : 'Moderate',
+                    description: item.description || item.title || 'Live incident pushed from FieldLink app.',
+                    reporterName: item.reported_by_node ? `FieldLink Node ${item.reported_by_node}` : 'Field Officer (Online Sync)',
+                    reporterRole: 'Field Officer',
+                    timestamp: item.created_at ? new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    status: item.status === 'VERIFIED' ? 'Verified' : 'Pending Sync',
+                    affectedVehicleIds: ['veh-2048'],
+                    affectedShipmentIds: ['ship-2048'],
+                    verificationStatus: 'True Alarm (Verified)',
+                    verificationSource: 'Field Report',
+                    confidenceScore: 96,
+                  };
+                  newItems.push(newInc);
+                }
+              }
+
+              if (newItems.length === 0) return prev;
+              return [...newItems, ...prev];
+            });
+
+            if (hasNew) {
+              updatePendingCount();
+            }
+            break; // Stop after first responsive API endpoint
+          }
+        } catch (_) {
+          // Best-effort polling
+        }
+      }
+    };
+
+    const pollInterval = setInterval(fetchBackendIncidents, 3500);
+
     return () => {
       unsub1();
       unsub2();
       unsub3();
       unsub4();
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(pollInterval);
     };
   }, []);
 
@@ -368,7 +467,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     addSystemLog(`Rerouted shipment ${targetShipment.trackingCode} to ${chosenOption ? chosenOption.name : newRouteOptionId}`);
   };
 
-  // Submit Field Report (Offline capable)
+  // Submit Field Report (Offline & Online Sync capable)
   const submitFieldReport = (reportData: Omit<FieldReport, 'id' | 'timestamp' | 'status'>) => {
     const newReport: FieldReport = {
       ...reportData,
@@ -384,10 +483,49 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
-    // Online submission: propagate to incidents, alerts, live map
+    // 1. Online submission: propagate to local incidents, alerts, live map
     setIncidents(prev => [newReport, ...prev]);
     addNotification('Field Incident Reported', `New ${newReport.incidentType} reported on ${newReport.roadName} by ${newReport.reporterName}.`, 'Operations');
     addSystemLog(`Submitted field report ${newReport.id} on ${newReport.roadName}`);
+
+    // Auto-block road segment if critical/high
+    if (newReport.severity === 'Critical' || newReport.severity === 'High') {
+      blockRoadSegment(newReport.roadName, newReport.description);
+    }
+
+    // 2. Broadcast live event across browser tabs via BroadcastChannel & localStorage
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('pravaha_fieldlink_live');
+        bc.postMessage({ type: 'FIELD_REPORT_SUBMITTED', report: newReport });
+        setTimeout(() => bc.close(), 500);
+      }
+      localStorage.setItem('pravaha_latest_field_report', JSON.stringify(newReport));
+    } catch (_) {}
+
+    // 3. Post to backend API endpoints asynchronously
+    const payload = {
+      title: `[FIELDLINK] ${newReport.incidentType} at ${newReport.roadName}`,
+      incident_type: newReport.incidentType.toUpperCase(),
+      severity: newReport.severity.toUpperCase(),
+      lat: newReport.location.lat,
+      lng: newReport.location.lng,
+      road_name: newReport.roadName,
+      description: newReport.description,
+      reported_by_node: newReport.reporterName,
+    };
+
+    fetch('http://localhost:8000/api/v1/incidents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(() => {
+      fetch('https://pravaha-api.vercel.app/api/v1/incidents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).catch(() => {});
+    });
   };
 
   // Verify Incident -> State Propagation to block road & trigger alerts
