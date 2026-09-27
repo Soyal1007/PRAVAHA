@@ -7,6 +7,7 @@ class FieldReport {
   final String locationName;
   final String? description;
   final String? imagePath;
+  final String? voiceNoteUrl;
   final String syncStatus; // LOCAL_ONLY, OUTBOX, SYNCED
   final String createdAt;
   final String originNodeId;
@@ -20,6 +21,7 @@ class FieldReport {
     required this.locationName,
     this.description,
     this.imagePath,
+    this.voiceNoteUrl,
     required this.syncStatus,
     required this.createdAt,
     required this.originNodeId,
@@ -35,6 +37,7 @@ class FieldReport {
       'locationName': locationName,
       'description': description,
       'imagePath': imagePath,
+      'voiceNoteUrl': voiceNoteUrl,
       'syncStatus': syncStatus,
       'createdAt': createdAt,
       'originNodeId': originNodeId,
@@ -51,6 +54,7 @@ class FieldReport {
       locationName: map['locationName'],
       description: map['description'],
       imagePath: map['imagePath'],
+      voiceNoteUrl: map['voiceNoteUrl'],
       syncStatus: map['syncStatus'],
       createdAt: map['createdAt'],
       originNodeId: map['originNodeId'],

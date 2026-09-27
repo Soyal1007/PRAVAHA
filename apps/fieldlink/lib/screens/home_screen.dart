@@ -7,6 +7,7 @@ import '../services/sync_engine.dart';
 import 'report_incident_screen.dart';
 import 'connectivity_screen.dart';
 import 'mesh_monitor_screen.dart';
+import 'community_chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -102,6 +103,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         backgroundColor: const Color(0xFF1E293B),
         actions: [
           IconButton(
+            tooltip: 'Emergency Community Chat',
+            icon: const Icon(Icons.forum, color: Colors.amberAccent),
+            onPressed: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => CommunityChatScreen(bleService: _bleService)));
+            },
+          ),
+          IconButton(
             tooltip: 'Mesh Monitor',
             icon: const Icon(Icons.radar, color: Colors.purpleAccent),
             onPressed: () {
@@ -164,6 +173,36 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
             const SizedBox(height: 12),
 
+            // ── Emergency Community Chat quick-tap ───────────────────────────
+            GestureDetector(
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => CommunityChatScreen(bleService: _bleService))),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.amberAccent.withAlpha(100)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.forum, color: Colors.amberAccent, size: 26),
+                    SizedBox(width: 14),
+                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('EMERGENCY COMMUNITY CHAT',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                      Text('Connect & chat with officers, units & citizens',
+                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                    ]),
+                    Spacer(),
+                    Icon(Icons.arrow_forward_ios, color: Color(0xFF475569), size: 14),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
             // ── Mesh Monitor quick-tap ───────────────────────────────
             GestureDetector(
               onTap: () => Navigator.push(context,
@@ -177,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.radar, color: Colors.purpleAccent, size: 28),
+                    Icon(Icons.radar, color: Colors.purpleAccent, size: 26),
                     SizedBox(width: 14),
                     Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text('BLE MESH MONITOR',
@@ -196,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('MY RECENT FIELD REPORTS',
+                const Text('MY FIELD REPORTS & INCIDENTS',
                     style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold, fontSize: 12)),
                 TextButton.icon(
                   icon: const Icon(Icons.refresh, size: 14, color: Colors.tealAccent),
@@ -224,12 +263,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     itemCount: reports.length,
                     itemBuilder: (_, index) {
                       final r = reports[index];
+                      final isOutbox = r.originNodeId == _thisNodeId;
+
                       return Container(
                         margin: const EdgeInsets.only(bottom: 10),
                         decoration: BoxDecoration(
                           color: const Color(0xFF1E293B),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF334155)),
+                          border: Border.all(color: isOutbox ? Colors.tealAccent.withAlpha(60) : Colors.indigoAccent.withAlpha(60)),
                         ),
                         child: ListTile(
                           leading: CircleAvatar(
@@ -240,12 +281,42 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 color: r.severity == 'CRITICAL' ? Colors.red : Colors.amber,
                                 size: 18),
                           ),
-                          title: Text('${r.incidentType} on ${r.locationName}',
-                              style: const TextStyle(
-                                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                          subtitle: Text(
-                              'Node: ${r.originNodeId} | Status: ${r.syncStatus}',
-                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                          title: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: (isOutbox ? Colors.teal : Colors.indigo).withAlpha(50),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  isOutbox ? 'OUTBOX' : 'INBOX',
+                                  style: TextStyle(
+                                    color: isOutbox ? Colors.tealAccent : Colors.indigoAccent,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text('${r.incidentType} on ${r.locationName}',
+                                    style: const TextStyle(
+                                        color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                    overflow: TextOverflow.ellipsis),
+                              ),
+                            ],
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Node: ${r.originNodeId} | Status: ${r.syncStatus}',
+                                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
+                              if (r.voiceNoteUrl != null)
+                                Text('🎙️ Voice Note: ${r.voiceNoteUrl}',
+                                    style: const TextStyle(color: Colors.tealAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                           trailing: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(

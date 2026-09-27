@@ -87,6 +87,61 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
     );
   }
 
+  // Voice note state
+  bool isRecordingVoice = false;
+  int recordSeconds = 0;
+  Timer? _voiceTimer;
+  String? _recordedVoiceNote;
+  String? _selectedPresetImage;
+
+  final List<Map<String, String>> presetPhotos = [
+    {
+      'label': 'Landslide Debris',
+      'url': 'https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      'label': 'Flooded Highway',
+      'url': 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      'label': 'Bridge Collapse',
+      'url': 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=800&q=80',
+    },
+  ];
+
+  void _toggleVoiceRecording() {
+    if (isRecordingVoice) {
+      _voiceTimer?.cancel();
+      setState(() {
+        isRecordingVoice = false;
+        _recordedVoiceNote = '00:${recordSeconds.toString().padLeft(2, '0')}';
+      });
+    } else {
+      setState(() {
+        isRecordingVoice = true;
+        recordSeconds = 0;
+        _recordedVoiceNote = null;
+      });
+      _voiceTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+        if (!mounted) return;
+        setState(() {
+          recordSeconds++;
+          if (recordSeconds >= 30) {
+            _toggleVoiceRecording();
+          }
+        });
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _locationController.dispose();
+    _descController.dispose();
+    _voiceTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> _submitReport() async {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
@@ -95,6 +150,10 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
     
     final thisNodeId = await widget.bleService.getThisNodeId();
     final String reportId = 'INC-${DateTime.now().millisecondsSinceEpoch}';
+
+    // Determine photo URL: selected file path OR selected preset online URL
+    final photoUrl = _selectedPresetImage ?? _selectedImage?.path ?? presetPhotos[0]['url'];
+
     final report = FieldReport(
       id: reportId,
       incidentType: selectedType,
@@ -103,7 +162,8 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
       longitude: 88.4231,
       locationName: _locationController.text.isNotEmpty ? _locationController.text : 'NH-10 Segment',
       description: _descController.text.isNotEmpty ? _descController.text : 'Disruption reported from field.',
-      imagePath: _selectedImage?.path,
+      imagePath: photoUrl,
+      voiceNoteUrl: _recordedVoiceNote,
       syncStatus: 'LOCAL_ONLY',
       createdAt: DateTime.now().toIso8601String(),
       originNodeId: thisNodeId,
@@ -222,13 +282,115 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text('4. ATTACH PHOTO EVIDENCE (OPTIONAL)', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 12, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            const Text('4. RECORD FIELD VOICE NOTE (OPTIONAL)', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 12, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            _selectedImage == null
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: isRecordingVoice ? Colors.redAccent : const Color(0xFF334155)),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: isRecordingVoice ? Colors.red : const Color(0xFF087F8C),
+                    child: IconButton(
+                      icon: Icon(isRecordingVoice ? Icons.stop : Icons.mic, color: Colors.white),
+                      onPressed: _toggleVoiceRecording,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isRecordingVoice
+                              ? 'RECORDING VOICE NOTE: 00:${recordSeconds.toString().padLeft(2, '0')}'
+                              : (_recordedVoiceNote != null
+                                  ? 'VOICE NOTE ATTACHED ($_recordedVoiceNote)'
+                                  : 'Tap mic to record 30s voice memo'),
+                          style: TextStyle(
+                            color: isRecordingVoice ? Colors.redAccent : Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          isRecordingVoice
+                              ? 'Audio will be compressed & relayed over BLE mesh'
+                              : 'High-clarity compressed audio relay',
+                          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_recordedVoiceNote != null && !isRecordingVoice)
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white70, size: 18),
+                      onPressed: () => setState(() => _recordedVoiceNote = null),
+                    ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+            const Text('5. ATTACH PHOTO EVIDENCE (HIGH VISIBILITY)', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 12, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            
+            // Preset high-visibility photos for multi-node testing
+            SizedBox(
+              height: 70,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: presetPhotos.length,
+                itemBuilder: (_, i) {
+                  final item = presetPhotos[i];
+                  final isSel = _selectedPresetImage == item['url'];
+                  return GestureDetector(
+                    onTap: () => setState(() {
+                      _selectedPresetImage = item['url'];
+                      _selectedImage = null;
+                    }),
+                    child: Container(
+                      width: 110,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSel ? Colors.tealAccent : Colors.transparent,
+                          width: 2,
+                        ),
+                        image: DecorationImage(
+                          image: NetworkImage(item['url']!),
+                          fit: BoxFit.cover,
+                          colorFilter: ColorFilter.mode(
+                            Colors.black.withAlpha(isSel ? 40 : 120),
+                            BlendMode.darken,
+                          ),
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          item['label']!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            _selectedImage == null && _selectedPresetImage == null
                 ? InkWell(
                     onTap: _showImagePickerModal,
                     child: Container(
-                      height: 80,
+                      height: 70,
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E293B),
                         borderRadius: BorderRadius.circular(12),
@@ -237,9 +399,9 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.add_a_photo, color: Colors.tealAccent, size: 24),
+                          Icon(Icons.add_a_photo, color: Colors.tealAccent, size: 22),
                           SizedBox(width: 10),
-                          Text('Tap to Capture / Attach Photo', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.w600)),
+                          Text('Take Custom Camera Photo', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontWeight: FontWeight.w600)),
                         ],
                       ),
                     ),
@@ -248,7 +410,9 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.file(_selectedImage!, height: 160, width: double.infinity, fit: BoxFit.cover),
+                        child: _selectedPresetImage != null
+                            ? Image.network(_selectedPresetImage!, height: 150, width: double.infinity, fit: BoxFit.cover)
+                            : Image.file(_selectedImage!, height: 150, width: double.infinity, fit: BoxFit.cover),
                       ),
                       Positioned(
                         top: 8,
@@ -259,14 +423,17 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
                           child: IconButton(
                             padding: EdgeInsets.zero,
                             icon: const Icon(Icons.close, color: Colors.white, size: 18),
-                            onPressed: () => setState(() => _selectedImage = null),
+                            onPressed: () => setState(() {
+                              _selectedImage = null;
+                              _selectedPresetImage = null;
+                            }),
                           ),
                         ),
                       ),
                     ],
                   ),
             const SizedBox(height: 20),
-            const Text('5. FIELD NOTES (OPTIONAL)', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 12, fontWeight: FontWeight.bold)),
+            const Text('6. FIELD NOTES (OPTIONAL)', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 12, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextField(
               controller: _descController,
