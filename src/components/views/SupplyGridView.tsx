@@ -99,7 +99,7 @@ export const SupplyGridView: React.FC = () => {
             const isCritical = wh.daysRemaining < 3;
             // Find active shipments originating or targeting this warehouse
             const activeIncoming = shipments.filter(
-              (s) => s.destination.name.includes(wh.district) || s.destination.id === wh.id
+              (s) => s.destination.name.includes(wh.district) || s.destination.name.includes(wh.name)
             );
 
             return (
