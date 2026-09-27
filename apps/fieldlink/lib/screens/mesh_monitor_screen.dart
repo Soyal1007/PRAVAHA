@@ -332,7 +332,7 @@ class _MeshMonitorScreenState extends State<MeshMonitorScreen> {
                 // ── PACKET FEED ─────────────────────────────────────────────
                 Expanded(
                   child: () {
-                    final filteredPackets = packets.filter((p) {
+                    final filteredPackets = packets.where((p) {
                       if (activeFilter == 'INBOX') return !_isOutbox(p);
                       if (activeFilter == 'OUTBOX') return _isOutbox(p);
                       return true;
@@ -413,14 +413,6 @@ class _MeshMonitorScreenState extends State<MeshMonitorScreen> {
                       },
                     );
                   }(),
-                ),
-              ],
-            ),estamp']),
-                                    style: const TextStyle(color: Color(0xFF475569), fontSize: 10)),
-                              ),
-                            );
-                          },
-                        ),
                 ),
               ],
             ),

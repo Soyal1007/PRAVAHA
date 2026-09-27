@@ -369,7 +369,7 @@ class _CommunityChatScreenState extends State<CommunityChatScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               color: const Color(0xFF0F5257),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.between,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
